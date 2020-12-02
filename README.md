@@ -11,7 +11,7 @@ Miscellaneous Powershell scripts for use with Azure ARM
 
 ## Description
 
-This script is intended for use in scenarios where you are configuring [Windows Virtual Deskitop](https://azure.microsoft.com/en-us/services/virtual-desktop/) environments to work with [FSLogix Profile containers] stored in file shares hosted on (https://docs.microsoft.com/en-us/fslogix/configure-profile-container-tutorial)[Azure Files](https://docs.microsoft.com/en-us/azure/storage/files/) as the location for the profile share and Active Directory Domain services (NOT Azure Active Directory Domain Services!) as the authentication mechanism.
+This script is intended for use in scenarios where you are configuring [Windows Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/) environments to work with [FSLogix Profile containers](https://docs.microsoft.com/en-us/fslogix/configure-profile-container-tutorial) stored on file shares in [Azure Files](https://docs.microsoft.com/en-us/azure/storage/files/) as the location for the profile share and Active Directory Domain services (NOT Azure Active Directory Domain Services!) as the authentication mechanism.
 
 This script does the necessary configuration in both the local AD and in Azure so once you run it (cleanly) you can move on to FSLogix installation and configuration.
 
