@@ -11,11 +11,11 @@ Miscellaneous Powershell scripts for use with Azure ARM
 
 ## Description
 
-This script is intended for use in scenarios where you are configuring [Windows Virtual Deskitop](https://azure.microsoft.com/en-us/services/virtual-desktop/) environments to work with [FSLogix Profile containers](https://docs.microsoft.com/en-us/fslogix/configure-profile-container-tutorial) [Azure Files](https://docs.microsoft.com/en-us/azure/storage/files/) as the location for the profile share and Active Directory Domain services (NOT Azure Active Directory Domain Services!) as the authentication mechanism.
+This script is intended for use in scenarios where you are configuring [Windows Virtual Deskitop](https://azure.microsoft.com/en-us/services/virtual-desktop/) environments to work with [FSLogix Profile containers] stored in file shares hosted on (https://docs.microsoft.com/en-us/fslogix/configure-profile-container-tutorial)[Azure Files](https://docs.microsoft.com/en-us/azure/storage/files/) as the location for the profile share and Active Directory Domain services (NOT Azure Active Directory Domain Services!) as the authentication mechanism.
 
 This script does the necessary configuration in both the local AD and in Azure so once you run it (cleanly) you can move on to FSLogix installation and configuration.
 
-This is intended for use in place of the [AzFilesHybrid Popwershell module](https://github.com/Azure-Samples/azure-files-samples/releases) which I and others have found to be cranky and unreliable.
+This is intended for use in place of the [AzFilesHybrid Powershell module](https://github.com/Azure-Samples/azure-files-samples/releases) which myself and others have found to be cranky and unreliable.
 
 This script will create a computer object in AD to represent the Kerberos identity for authentication.  The computer object will have the same username as the storage account.
 
@@ -23,7 +23,7 @@ This script is based on earlier work by John Kelbley, a WVD GBB at Microsoft, wh
 
 The script does do a fair amount of sanity checking to avoid "normal" errors but is not bulletproof.
 
-It is strongly recommended to run the script with the `Verbose` parameter for more detail on what it is doing.
+It is strongly recommended to run the script with the `-Verbose` parameter for more detail on what it is doing.
 
 ## Parameters
 
@@ -59,7 +59,7 @@ The membership of this group should be people who will need full access to see t
 
 The name of an AD group which will be granted the "Storage File Data SMB Share Elevated Contributor" IAM role on the Azure Files share.
 
-This group should contain all users that will be using the FSLogix profile sharing environment (e.g. all WVD users).
+This group should contain _all users that will be using the FSLogix profile sharing environment_ (e.g. all WVD users).
 
 ### IsGovCloud (ONLY FOR Azure Gov Cloud)
 
