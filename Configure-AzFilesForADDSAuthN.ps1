@@ -1,7 +1,11 @@
 # Configure-AzFilesForADDSAuthN.ps1
+# Configure an Azure Files share for authentication using ADDS Authentication
+# Plus permission customization for use with FSLogix
 
 # Original version by John Kelbley <johnkel at Microsoft dotcom>
-# Updated by Ken Hoover <kenhoover at Microsoft dotcom>
+# Scriptified/Parameterized by Ken Hoover <kenhoover at Microsoft dotcom>
+
+# December 2020
 
 ###############################################################################################################
 #  This is the "Manual" process to configure AD authentication for Azure Files
@@ -24,7 +28,7 @@
 # Required parameters - make sure you have all of this info ahead of time
 ############################################################################
 #
-
+[CmdletBinding()]
 param(
     [Parameter(mandatory = $true)][string]$storageAccountName,      # The name of the storage account with the share
     [Parameter(mandatory = $true)][string]$storageAccountRGName,    # The name of the RG the storage account is in
