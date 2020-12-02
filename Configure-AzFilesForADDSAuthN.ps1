@@ -3,7 +3,7 @@
 # Plus permission customization for use with FSLogix
 
 # Original version by John Kelbley <johnkel at Microsoft dotcom>
-# Scriptified/Parameterized by Ken Hoover <kenhoover at Microsoft dotcom>
+# Scriptified/Parameterized by Ken Hoover <ken dot hoover at Microsoft dotcom>
 
 # December 2020
 
