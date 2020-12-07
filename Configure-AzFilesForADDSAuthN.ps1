@@ -60,13 +60,17 @@ if ($storageAccountName.Length -ge 15) {
     exit
 }
 
+# Share names in Azure Files must be all lowercase so force whatever the user entered to lowercase.
+# ref: https://docs.microsoft.com/en-us/rest/api/storageservices/Naming-and-Referencing-Shares--Directories--Files--and-Metadata
+$profilesharename = $profilesharename.ToLower()
 
 # Start by confirming that the storage account specified actually exists.
 write-verbose ("Verifying that we can access $storageAccountName" )
 if (Get-AzStorageAccount -name $storageAccountName -resourceGroupName $storageAccountRGName) {
 # Create a Kerb key for the storage account to use with ADDS
     write-verbose ("Creating Kerberos key for storage account $storageAccountName")
-    $newkey = New-AzStorageAccountKey -ResourceGroupName $storageAccountRGName -name $storageAccountName -KeyName kerb1
+    # New-AzStorageAccountKey creates a new kdy but does not return it.  Assignment is just to capture/suppress the output.
+    $newkeyresult = New-AzStorageAccountKey -ResourceGroupName $storageAccountRGName -name $storageAccountName -KeyName kerb1
     $Keys = get-azstorageaccountkey -ResourceGroupName $storageAccountRGName -Name $storageAccountName -listkerbkey
     $kerbkey = $keys | where-object {$_.keyname -eq 'kerb1'} 
     $CompPassword = $kerbkey.value | ConvertTo-Securestring -asplaintext -force
@@ -246,7 +250,7 @@ $result = New-AzRoleAssignment -RoleDefinitionName "Storage File Data SMB Share 
 $ShareName		= $profileShareName
 $drive 			= "Y:"
 $path = $Drive + "\"
-$Mapkey = $keys | where-object {$_.keyname -eq 'key1'} 
+$Mapkey = (Get-AzStorageAccountKey -ResourceGroupName $storageAccountRGName -Name $storageAccountName).value[0]
 
 ################################
 # Note that the next line is for Azure Commercial - must change DNS suffix for sofisgovverign clouds
@@ -326,6 +330,6 @@ $result = $acl | Set-Acl -Path $path
 
 Write-Verbose ("Disconnecting from file share...")
 # Disconnect the mounted file share
-Remove-SmbMapping -LocalPath $MapPath -Force
+Remove-SmbMapping -LocalPath $drive -Force
 
 Write-Verbose ("Execution complete.")
