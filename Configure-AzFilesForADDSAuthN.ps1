@@ -14,7 +14,7 @@
 #  Assumes:
 #	* You are running this script as a user that can create a new object in the target AD
 #   * You have the "Az" and "AzureADPreview" modules installed
-#   * You are connected via Connect-AzAccount as a user with "owner" rights to manually add roles in portal...and a share!
+#   * You are connected via Connect-AzAccount as a user with rights to manually add roles and create Azure files shares
 #   * You have connected to the target AzureAD environment using Connect-AzureAD
 #	* An OU in the local AD has been identified for the new computer object
 #	* You have AAD synced to AD (have you confirmed this is working?)
@@ -24,6 +24,11 @@
 #
 ###############################################################################################################
 #
+# CHANGELOG
+#
+# 11 Jan 2021 : Find storageAcocuntRGName for ourselves instead of forcing the user to provide it.
+#
+#
 ############################################################################
 # Required parameters - make sure you have all of this info ahead of time
 ############################################################################
@@ -31,7 +36,6 @@
 [CmdletBinding()]
 param(
     [Parameter(mandatory = $true)][string]$storageAccountName,      # The name of the storage account with the share
-    [Parameter(mandatory = $true)][string]$storageAccountRGName,    # The name of the RG the storage account is in
     [Parameter(mandatory = $true)][string]$profileShareName,        # The name of the profiles share.  The share will be created if it doesn't exist.
     [Parameter(mandatory = $true)][string]$ADOuDistinguishedName,   # The full DN of the OU to put the new computer object in
     [Parameter(mandatory = $true)][string]$ShareAdminGroupName,     # the name of an AD group which will have elevated access to the profile share
@@ -64,18 +68,20 @@ if ($storageAccountName.Length -ge 15) {
 # ref: https://docs.microsoft.com/en-us/rest/api/storageservices/Naming-and-Referencing-Shares--Directories--Files--and-Metadata
 $profilesharename = $profilesharename.ToLower()
 
-# Start by confirming that the storage account specified actually exists.
-write-verbose ("Verifying that we can access $storageAccountName" )
-if (Get-AzStorageAccount -name $storageAccountName -resourceGroupName $storageAccountRGName) {
-# Create a Kerb key for the storage account to use with ADDS
+# Confirm that the storage account specified actually exists and populate storageAccountRGName
+write-verbose ("Verifying that $storageAccountName exists.  This will take a moment..." )
+$storageAccount = Get-AzStorageAccount | where { $_.StorageAccountName -eq $storageAccountName}
+    
+if ($storageAccount) {
+    $storageAccountRGName = $storageaccount.ResourceGroupName
+    # Create a Kerb key for the storage account to use with ADDS
     write-verbose ("Creating Kerberos key for storage account $storageAccountName")
-    # New-AzStorageAccountKey creates a new kdy but does not return it.  Assignment is just to capture/suppress the output.
-    $newkeyresult = New-AzStorageAccountKey -ResourceGroupName $storageAccountRGName -name $storageAccountName -KeyName kerb1
+    New-AzStorageAccountKey -ResourceGroupName $storageAccountRGName -name $storageAccountName -KeyName kerb1 | Out-Null
     $Keys = get-azstorageaccountkey -ResourceGroupName $storageAccountRGName -Name $storageAccountName -listkerbkey
     $kerbkey = $keys | where-object {$_.keyname -eq 'kerb1'} 
     $CompPassword = $kerbkey.value | ConvertTo-Securestring -asplaintext -force
 } else {
-    Write-Warning ("s\Storage account $storageAccountName not found.")
+    Write-Warning ("Storage account $storageAccountName not found.")
     exit
 }
 
@@ -88,7 +94,7 @@ $Forest = get-adforest
 $Domain = get-ADdomain
 
 if ((!($Forest)) -or (!($Domain))) {
-    write-error ("Unable to contact AD. Exiting.")
+    write-error ("Unable to contact to ADDS. Exiting.")
     exit
 }
 
@@ -153,6 +159,7 @@ $updateresult = Set-AzStorageAccount `
 
 if (!($updateresult)) {
     write-warning "error occurred while updating the storage account.  Exiting."
+    exit 
 }
 
 #################################
@@ -313,6 +320,7 @@ $result = $acl | Set-Acl -Path $path
 write-verbose ("Adding Authenticated Users...")
 $acl = Get-Acl $path
 $rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList "NT AUTHORITY\Authenticated Users", "Modify,Synchronize", "None", "None", "Allow"
+$acl.SetAccessRule($rule)
 $result = $acl | Set-Acl -Path $path
 
 # set "Creator Owner / Subfolders and Files Only / Modify
