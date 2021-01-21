@@ -26,7 +26,7 @@
 #
 # CHANGELOG
 #
-# 11 Jan 2021 : Find storageAcocuntRGName for ourselves instead of forcing the user to provide it.
+# 11 Jan 2021 : Find storageAccountRGName for ourselves instead of forcing the user to provide it.
 #
 #
 ############################################################################

@@ -33,10 +33,6 @@ The name of the storage account that holds the Azure Files share.
 
 The name of the storage account must be 15 characters or less to avoid legacy netBIOS issues.
 
-### storageAccountRGName
-
-The name of the resource group that the storage account is in.
-
 ### profileShareName
 
 The name of the Azure Files share that you will use with FSLogix.
