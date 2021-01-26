@@ -3,7 +3,8 @@ Miscellaneous Powershell scripts for use with Azure ARM
 
 ## Contents
 
-* Configure-AzFilesForADDSAuthentication.ps1
+* Configure-AzFilesForADDSAuthentication.ps1 - Sets up your Azure Files share for use with FSLogix
+* Exterminate-AzureVM.ps1 - Deletes all elements of an Azure VM (compute, OS disk, data disks and NICs)
 
 ***
 
@@ -62,3 +63,15 @@ This group should contain _all users that will be using the FSLogix profile shar
 Add this parameter if you are working in Azure Gov Cloud.  This is necessary because the SPN format for the kerberos configuration is different between the public and government clouds.
 
 ![Screenshot](https://github.com/hooverken/ARMPowershell/blob/main/Configure-AzFilesForADDSAuthNScreenshot.PNG)
+
+---
+
+# Exterminate-AzureVM.ps1
+
+This script deletes all of the (major) components of a VM:
+* Compute instance
+* OS disk
+* All data disks
+* All NICs.
+
+This is intended to make cleanup easier when creating machines for sandboxing etc.  The deletes are NOT UNDOABLE so use with care.
