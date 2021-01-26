@@ -74,4 +74,8 @@ This script deletes all of the (major) components of a VM:
 * All data disks
 * All NICs.
 
-This is intended to make cleanup easier when creating machines for sandboxing etc.  The deletes are NOT UNDOABLE so use with care.
+It works by finding the VM object and then looking at the OSProfile, storageProfile and the networkProfile properties of the VM to find the disks and NICs associated with the VM and then deleting them.
+
+This is intended to make cleanup easier when messing around with machines for sandboxing etc.  
+
+**The deletes are NOT UNDOABLE so use with care.**
