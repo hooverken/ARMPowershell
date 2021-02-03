@@ -54,5 +54,5 @@ Remove-AzDisk -DiskName $osdisk.Name -ResourceGroupName $RGname -Verbose -Force
 
 Write-host "Removing NICs for $virtualMachineName..."
 $nics | % { 
-    $_ | Remove-AzNetworkInterface -Force -WhatIf
+    $_ | Remove-AzNetworkInterface -Force
 }
