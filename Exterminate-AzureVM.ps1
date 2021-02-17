@@ -1,7 +1,9 @@
 # Exterminate-AzureVM.ps1
-# Deletes all components of the target VM name -- compute, OS disk, data disk(s) and NIC(s)
+
+# Deletes all components of the target VM -- compute, OS disk, data disk(s) and NIC(s)
 # Does NOT ask for confirmation.  Make sure you know what you're doing!
-# By Ken Hoover <ken.hoover@microsoft.com>
+
+# by Ken Hoover <ken.hoover@microsoft.com>
 # January 2021
 
 [CmdletBinding()]
@@ -45,8 +47,10 @@ Write-host "Removing compute resource $virtualMachineName..."
 Remove-AzVm -Name $vm.Name -ResourceGroupName $vm.ResourceGroupName -Verbose -Force
 
 Write-host "Removing data disks for $virtualMachineName..."
-$datadisks | % { 
-    Remove-AzDisk -DiskName $_.Name -ResourceGroupName $RGname -Verbose -Force
+if ($datadisks) {
+    $datadisks | % { 
+        Remove-AzDisk -DiskName $_.Name -ResourceGroupName $RGname -Verbose -Force
+    }
 }
 
 Write-host "Removing OS disk for $virtualMachineName..."
