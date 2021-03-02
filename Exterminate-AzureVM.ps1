@@ -6,6 +6,8 @@
 # by Ken Hoover <ken.hoover@microsoft.com>
 # January 2021
 
+# TODO / Future Enhancement:  Include deleting public IP's associated with the VM.
+
 [CmdletBinding()]
 param(
     [Parameter(mandatory = $true)][string]$VirtualMachineName
@@ -51,6 +53,8 @@ if ($datadisks) {
     $datadisks | % { 
         Remove-AzDisk -DiskName $_.Name -ResourceGroupName $RGname -Verbose -Force
     }
+} else {
+    Write-Output "$VirtualMachineName has no data disks to remove."
 }
 
 Write-host "Removing OS disk for $virtualMachineName..."
