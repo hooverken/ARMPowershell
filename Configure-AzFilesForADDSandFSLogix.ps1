@@ -19,6 +19,7 @@
 #	* An OU in the local AD has been identified for the new computer object
 #	* You have AAD synced to AD (have you confirmed this is working?)
 #	* You are executing this script on a domain joined VM as a user with computer account add rights
+#   * The storage account name you are using is LESS THAN 15 characters long
 # 
 # Process here:  https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-active-directory-enable
 #
@@ -26,7 +27,8 @@
 #
 # CHANGELOG
 #
-# 11 Jan 2021 : Find storageAccountRGName for ourselves instead of forcing the user to provide it.
+# 11 Jan 2021  : Find storageAccountRGName for ourselves instead of forcing the user to provide it.
+# 19 March 2021: Add connection test for 445/TCP
 #
 #
 ############################################################################
@@ -58,9 +60,9 @@ if ($null -eq (Get-AzureADCurrentSessionInfo)) {
     exit
 }
 
-# Storage account name needs to be < 15 characters to avoid risk of hitting legacy NetBIOS limits in AD
+# Storage account name needs to be <= 15 characters to avoid risk of hitting legacy NetBIOS limits in AD
 if ($storageAccountName.Length -ge 15) {
-    write-warning ("Storage account name (" + $storageAccountName.Length + ") is over 15 characters.  Please use a shorter name to avoid issues.")
+    write-warning ("Storage account name (" + $storageAccountName.Length + ") is >= 15 characters.  Please use a shorter name to avoid issues.")
     exit
 }
 
@@ -70,11 +72,26 @@ $profilesharename = $profilesharename.ToLower()
 
 # Confirm that the storage account specified actually exists and populate storageAccountRGName
 write-verbose ("Verifying that $storageAccountName exists.  This will take a moment..." )
-$storageAccount = Get-AzStorageAccount | where { $_.StorageAccountName -eq $storageAccountName}
-    
+$storageAccount = Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $storageAccountName }
+
+Write-Verbose ("Verifying that we can connect to the storage account")
 if ($storageAccount) {
+
+    # Grab the RG name that the storage account is in since we'll need it.
     $storageAccountRGName = $storageaccount.ResourceGroupName
-    # Create a Kerb key for the storage account to use with ADDS
+
+    # Verify that we can connect to the storage account's files endpoint on port 445
+    Write-Verbose ("Testing connectivity to " + $storageAccount.PrimaryEndpoints.File + " on port TCP/445...")
+    if ($storageAccount.PrimaryEndpoints.File -match '\/\/(\S+)\/') {
+        if (Test-NetConnection -port 445 -ComputerName $Matches[1] -InformationLevel Quiet) {
+            write-verbose ("Connection test to $matches[0] on port 445/TCP successful.")
+        } else {
+            write-warning ("Unable to connect to $filesEndpointFqdn on port 445.  Please check for firewall blocks.  Exiting.")
+            exit 
+        }
+    }
+
+    # Create a Kerberos key for the storage account to use with ADDS
     write-verbose ("Creating Kerberos key for storage account $storageAccountName")
     New-AzStorageAccountKey -ResourceGroupName $storageAccountRGName -name $storageAccountName -KeyName kerb1 | Out-Null
     $Keys = get-azstorageaccountkey -ResourceGroupName $storageAccountRGName -Name $storageAccountName -listkerbkey
@@ -94,7 +111,7 @@ $Forest = get-adforest
 $Domain = get-ADdomain
 
 if ((!($Forest)) -or (!($Domain))) {
-    write-error ("Unable to contact to ADDS. Exiting.")
+    write-error ("Unable to get domain/forest information from ADDS. Exiting.")
     exit
 }
 
