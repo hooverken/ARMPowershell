@@ -48,6 +48,7 @@ param(
 # Some sanity checks before we get started
 
 # Make sure we are connected to Azure
+Write-Verbose ("Verifying that we are connected to Azure...")
 $currentContext = Get-AzContext -ErrorAction SilentlyContinue
 if ($null -eq $currentContext) {
     write-warning ("You must connect to Azure with Connect-AzAccount before running this script.")
@@ -55,14 +56,18 @@ if ($null -eq $currentContext) {
 }
 
 # Make sure we're connected to Azure AD
-if ($null -eq (Get-AzureADCurrentSessionInfo)) {
-    write-output "You must connect to AzureAD using Connect-AzureAD before running this script."
+Write-Verbose ("Verifying that we are connected to Azure AD...")
+try { 
+    $result = Get-AzureADTenantDetail 
+} 
+catch [Microsoft.Open.Azure.AD.CommonLibrary.AadNeedAuthenticationException] { 
+    Write-Warning "You must conenct to Azure AD using Connect-AzureAD before running this script " 
     exit
 }
 
 # Storage account name needs to be <= 15 characters to avoid risk of hitting legacy NetBIOS limits in AD
 if ($storageAccountName.Length -ge 15) {
-    write-warning ("Storage account name (" + $storageAccountName.Length + ") is >= 15 characters.  Please use a shorter name to avoid issues.")
+    write-warning ("Storage account name (" + $storageAccountName + ") is >= 15 characters.  Please use a shorter name to avoid issues.")
     exit
 }
 
@@ -83,10 +88,10 @@ if ($storageAccount) {
     # Verify that we can connect to the storage account's files endpoint on port 445
     Write-Verbose ("Testing connectivity to " + $storageAccount.PrimaryEndpoints.File + " on port TCP/445...")
     if ($storageAccount.PrimaryEndpoints.File -match '\/\/(\S+)\/') {
-        if (Test-NetConnection -port 445 -ComputerName $Matches[1] -InformationLevel Quiet) {
-            write-verbose ("Connection test to $matches[0] on port 445/TCP successful.")
+        if (Test-NetConnection -port 445 -ComputerName $matches[1] -InformationLevel Quiet) {
+            write-verbose ("Connection test to " + $matches[1] + " on port TCP/445 successful.")
         } else {
-            write-warning ("Unable to connect to $filesEndpointFqdn on port 445.  Please check for firewall blocks.  Exiting.")
+            write-warning ("Unable to connect to " + $matches[1] + " on port 445.  Please check for firewall blocks.  Exiting.")
             exit 
         }
     }
@@ -132,11 +137,13 @@ if (Get-AzStorageAccount -Name $storageAccountName -ResourceGroupName $storageAc
     # Make sure the target OU DN actually exists just to make sure
     $OUlist = get-adobject -filter 'ObjectClass -eq "organizationalUnit"'
     if ($oulist.distinguishedName -contains $ADOuDistinguishedName) {
-        if (get-ADComputer -Filter { Name -eq '$storageAccountName' } -ErrorAction SilentlyContinue) {
-            write-verbose ("Computer object $computeraccountName already exists in AD.")
+        if (get-ADComputer -Filter { Name -eq $storageAccountName } -ErrorAction SilentlyContinue) {
+            write-verbose ("Computer object $storageAccountName already exists in AD.")
         } else {
+            # The computer object doesn't exist in AD so we will create it.
             write-verbose ("Creating computer object in AD...")
-            $result = New-ADComputer -name $storageAccountName -path $ADOUDistinguishedName `
+            $result = New-ADComputer -name $storageAccountName `
+                -path $ADOUDistinguishedName `
                 -Description "DO NOT DELETE - Azure File Share" `
                 -ServicePrincipalNames $SPN `
                 -PasswordNeverExpires $true `
@@ -151,15 +158,22 @@ if (Get-AzStorageAccount -Name $storageAccountName -ResourceGroupName $storageAc
     write-warning ("Storage account $storageAccountName not found in RG $storageAccountRGName. Exiting")
 }
 
-$Computer = get-ADComputer $storageAccountName  # The computer object in AD for the share.
+write-verbose "Reading computer object from AD..."
+try {
+    $Computer = get-ADComputer $storageAccountName  # The computer object in AD for the share.
+}
+catch {
+    write-warning "Unable to retrieve computer object $storageAccountName from AD."
+    exit
+}
 
-#if you fail to create the account, it could be rights (often), but commonly the DN for the OU is wrong (folks guess at it!)
+# if you fail to create the account, it could be rights (often), but commonly the DN for the OU is wrong (folks guess at it!)
 # check to see what the DN actually is either in ADUC or pull all the OUs with the following command:
 # 	get-adobject -filter 'ObjectClass -eq "organizationalUnit"'
 
-#################################
-#Step 3 update Storage account
-#################################
+##################################################################
+# Step 3 update Storage account in Azure to use AD Authentication
+##################################################################
 #
 # Set the feature flag on the target storage account and provide the required AD domain information
 write-verbose ("Configuring storage account $storageAccountName for ADDS Authentication...")
@@ -175,7 +189,7 @@ $updateresult = Set-AzStorageAccount `
         -ActiveDirectoryAzureStorageSid $Computer.sid
 
 if (!($updateresult)) {
-    write-warning "error occurred while updating the storage account.  Exiting."
+    write-warning "Error occurred while updating the storage account.  Exiting."
     exit 
 }
 
@@ -197,8 +211,7 @@ if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD
 
 
 #####################################################
-#Step 5 Set Azure Roles (share) security
-#
+# Step 5 Set Azure Roles (share) security
 #####################################################
 #
 ################################################################################
@@ -210,9 +223,8 @@ if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD
 
 Write-verbose ("Setting storage context for role assignment...")
 
-$storageContext = New-AzStorageContext -StorageAccountName $storageAccountName `
-                        -StorageAccountKey (get-AzStorageAccountKey -ResourceGroupName $storageAccountRGName `
-                        -Name $storageAccountName)[0].Value
+$storageAccountKey = (get-AzStorageAccountKey -ResourceGroupName $storageAccountRGName -Name $storageAccountName)[0].Value
+$storageContext = New-AzStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageAccountKey
 
 # Check if the share exists.  If not, create it.
 Write-Verbose ("Checking if share $profileShareName exists in storage account $storageAccountName...")
@@ -306,7 +318,7 @@ $acl = Get-Acl $path
 ##############################################################
 # clears existing users rights (for Azure Files)
 ##############################################################
-write-verbose ("Clearing the ACL for the share...")
+write-verbose ("Removing Users...")
 $acl = Get-Acl $path
 $usersid = New-Object System.Security.Principal.Ntaccount ("Users")
 $acl.PurgeAccessRules($usersid)
