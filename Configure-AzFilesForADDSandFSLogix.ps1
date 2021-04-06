@@ -55,6 +55,13 @@ if ($null -eq $currentContext) {
     exit
 }
 
+# Make sure this is Azure Commercial Cloud or Azure Gov Cloud since this script doesn't understand other clouds
+switch ($currentContext.Environment) {
+    "AzureCloud" { Write-Verbose ("Connected to Azure Commercial Cloud ("+$currentContext.Environment + ")")}
+    "AzureUSGovernment" { Write-Verbose ("Connected to Azure US Gov Cloud ("+$currentContext.Environment + ")")}
+    "default" { Write-Warning "This script only understands Azure Commercial cloud and US Gov cloud, sorry." ; exit}
+}
+
 # Make sure we're connected to Azure AD
 Write-Verbose ("Verifying that we are connected to Azure AD...")
 try { 
@@ -289,7 +296,7 @@ $path = $Drive + "\"
 $Mapkey = (Get-AzStorageAccountKey -ResourceGroupName $storageAccountRGName -Name $storageAccountName).value[0]
 
 ################################
-# Note that the next line is for Azure Commercial - must change DNS suffix for sofisgovverign clouds
+# Note that the next line is for Azure Commercial - must change DNS suffix for gov and other soverign clouds
 #   Azure Gov:  .file.core.usgovcloudapi.net
 ################################
 if ($isGovCloud) {
