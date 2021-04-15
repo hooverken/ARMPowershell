@@ -1,5 +1,6 @@
 # Configure-AzFilesForADDSAuthN.ps1
-# Configure an Azure Files share for authentication using ADDS Authentication
+
+# This script configures an Azure Files share for authentication using ADDS Authentication
 # 
 # Based on work by version by John Kelbley <johnkel at Microsoft dotcom>
 # Scriptified/Parameterized by Ken Hoover <ken dot hoover at Microsoft dotcom>
@@ -57,7 +58,7 @@ if ($storageAccountName.Length -ge 15) {
 
 # Confirm that the storage account specified actually exists and populate storageAccountRGName
 write-verbose ("Verifying that $storageAccountName exists.  This will take a moment..." )
-$storageAccount = Get-AzStorageAccount | where { $_.StorageAccountName -eq $storageAccountName}
+$storageAccount = Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $storageAccountName}
     
 if ($storageAccount) {
     $storageAccountRGName = $storageaccount.ResourceGroupName
@@ -72,9 +73,9 @@ if ($storageAccount) {
     exit
 }
 
-#################################
+#######################################################################
 #Step 2 Create Computer Account and SPN, and get AD information
-#################################
+#######################################################################
 
 # AD Settings - These pull the info we need about the AD domain/forest:
 $Forest = Get-ADForest
@@ -127,9 +128,9 @@ $Computer = get-ADComputer $storageAccountName  # The computer object in AD for 
 # check to see what the DN actually is either in ADUC or pull all the OUs with the following command:
 # 	get-adobject -filter 'ObjectClass -eq "organizationalUnit"'
 
-#################################
-#Step 3 update Storage account
-#################################
+###################################################
+#Step 3 update Storage account to use ADDS AuthN
+###################################################
 #
 # Set the feature flag on the target storage account and provide the required AD domain information
 write-verbose ("Configuring storage account $storageAccountName for ADDS Authentication...")
@@ -145,7 +146,7 @@ $updateresult = Set-AzStorageAccount `
         -ActiveDirectoryAzureStorageSid $Computer.sid
 
 if (!($updateresult)) {
-    write-warning "error occurred while updating the storage account.  Exiting."
+    write-warning "An error occurred while updating the storage account.  Exiting."
     exit 
 }
 

@@ -3,12 +3,14 @@ Miscellaneous Powershell scripts for use with Azure ARM
 
 ## Contents
 
-* Configure-AzFilesForADDSAuthentication.ps1 - Sets up your Azure Files share for use with FSLogix
-* Exterminate-AzureVM.ps1 - Deletes all elements of an Azure VM (compute, OS disk, data disks and NICs)
+* **Configure-AzFilesForADDSandFSLogix.ps1** - Configures an Azure Files share for use with FSLogix including IAM role assignments and NTFS permissions
+* **Configure-AzFilesForADDSAuthN.ps1** - Configures an Azure storage account to use Aztive Directory (ADDS) authentication
+* **Exterminate-AzureVM.ps1** - Deletes all elements of an Azure VM (compute, OS disk, data disks and NICs)
+
 
 ***
 
-# Configure-AzFilesForADDSAuthentication.ps1
+# Configure-AzFilesForADDSandFSLogix.ps1
 
 ## Description
 
@@ -16,7 +18,7 @@ This script is intended for use in scenarios where you are configuring [Windows 
 
 This script does the necessary configuration in both the local AD and in Azure so once you run it (cleanly) you can move on to FSLogix installation and configuration.
 
-This is intended for use in place of the [AzFilesHybrid Powershell module](https://github.com/Azure-Samples/azure-files-samples/releases) which myself and others have found to be cranky and unreliable.
+This is intended for use in place of the [AzFilesHybrid Powershell module](https://github.com/Azure-Samples/azure-files-samples/releases) which myself and others have found to be clunky and unreliable.
 
 This script will create a computer object in AD to represent the Kerberos identity for authentication.  The computer object will have the same username as the storage account.
 
@@ -64,7 +66,45 @@ Add this parameter if you are working in Azure Gov Cloud.  This is necessary bec
 
 ![Screenshot](https://github.com/hooverken/ARMPowershell/blob/main/Configure-AzFilesForADDSAuthNScreenshot.PNG)
 
----
+
+# Configure-AzFilesForADDSAuthentication.ps1
+
+## Description
+
+This script configures an Azure storage account to use Active Directory (ADDS) for authentication.
+
+It does the necessary configuration in both the local AD and in Azure so once you run it (cleanly) it should work as expected. 
+
+Like the one above, this is intended for use in place of the [AzFilesHybrid Powershell module](https://github.com/Azure-Samples/azure-files-samples/releases) which myself and others have found to be cranky and unreliable.
+
+It will create a computer object in AD to represent the Kerberos identity for authentication.  The computer object will have the same username as the storage account.  Do not annoy, molest, feed or otherwise disturb this account as it will break authentication.
+
+This is based on earlier work by John Kelbley, a WVD GBB at Microsoft, which parallels the steps under "Option 2" of the [documentation](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-ad-ds-enable#option-2-manually-perform-the-enablement-actions) for enabling ADDS Authentication for Azure Files shares.
+
+The script does do a fair amount of sanity checking to avoid "normal" errors but is not bulletproof.
+
+It is strongly recommended to run with the `-Verbose` parameter for more detail on what it is doing.
+
+## Parameters
+
+### storageAccountName
+
+The name of the storage account that holds the Azure Files share.
+
+The name of the storage account must be 15 characters or less to avoid legacy netBIOS issues.
+
+
+### ADOuDistinguishedName
+
+The full DN of an OU for the new computer object to be created in.
+
+Example: `OU=MyOUName,DC=contoso,DC=com`
+
+### IsGovCloud (ONLY FOR Azure Gov Cloud)
+
+Add this parameter if you are working in Azure Gov Cloud.  This is necessary because the SPN format for the kerberos configuration is different between the public and government clouds.
+
+
 
 # Exterminate-AzureVM.ps1
 
@@ -72,7 +112,7 @@ This script deletes all of the (major) components of a VM:
 * Compute instance
 * OS disk
 * All data disks
-* All NICs.
+* All NICs
 
 It works by finding the VM object and then looking at the OSProfile, storageProfile and the networkProfile properties of the VM to find the disks and NICs associated with the VM and then deleting them.
 

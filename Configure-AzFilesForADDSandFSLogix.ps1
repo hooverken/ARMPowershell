@@ -5,14 +5,13 @@
 # Original version by John Kelbley <johnkel at Microsoft dotcom>
 # Scriptified/Parameterized by Ken Hoover <ken dot hoover at Microsoft dotcom>
 
-# December 2020
+# Original version December 2020
 
 ###############################################################################################################
 #  This is the "Manual" process to configure AD authentication for Azure Files
 #  (automated!)
 #
 #  Assumes:
-#	* You are running this script as a user that can create a new object in the target AD
 #   * You have the "Az" and "AzureADPreview" modules installed
 #   * You are connected via Connect-AzAccount as a user with rights to manually add roles and create Azure files shares
 #   * You have connected to the target AzureAD environment using Connect-AzureAD
@@ -28,13 +27,18 @@
 # CHANGELOG
 #
 # 11 Jan 2021  : Find storageAccountRGName for ourselves instead of forcing the user to provide it.
-# 19 March 2021: Add connection test for 445/TCP
+# 19 March 2021: Add connectivity check to storage account on port 445/TCP
+# 6 April 2021 : Improved prerequisite checks, general resilience and output detail
 #
 #
 ############################################################################
 # Required parameters - make sure you have all of this info ahead of time
 ############################################################################
 #
+
+#requires –RunAsAdministrator
+
+
 [CmdletBinding()]
 param(
     [Parameter(mandatory = $true)][string]$storageAccountName,      # The name of the storage account with the share
@@ -44,6 +48,7 @@ param(
     [Parameter(mandatory = $true)][string]$ShareUserGroupName,      # the name of an AD group which will have normal access to the profile share
     [Parameter(mandatory = $false)][switch]$IsGovCloud              # MUST add this parameter if you're working in Azure Gov Cloud, otherwise don't use it
 )
+
 
 # Some sanity checks before we get started
 
@@ -68,7 +73,7 @@ try {
     $result = Get-AzureADTenantDetail 
 } 
 catch [Microsoft.Open.Azure.AD.CommonLibrary.AadNeedAuthenticationException] { 
-    Write-Warning "You must conenct to Azure AD using Connect-AzureAD before running this script " 
+    Write-Warning "You must connect to Azure AD using Connect-AzureAD before running this script " 
     exit
 }
 
@@ -225,7 +230,8 @@ if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD
 #
 #  Add Share-level permissions as per https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-ad-ds-assign-permissions
 #
-#  Users should have "Storage File Data SMB Share Contributor" and Admins "Storage File Data SMB Share Elevated Contributor"  
+#  Users should have "Storage File Data SMB Share Contributor" 
+#  and Admins get "Storage File Data SMB Share Elevated Contributor"  
 #
 
 Write-verbose ("Setting storage context for role assignment...")
@@ -235,7 +241,7 @@ $storageContext = New-AzStorageContext -StorageAccountName $storageAccountName -
 
 # Check if the share exists.  If not, create it.
 Write-Verbose ("Checking if share $profileShareName exists in storage account $storageAccountName...")
-if (!(get-AzStorageShare -Name $profileShareName -Context $storageContext -ErrorAction SilentlyContinue)) {
+if ($null -eq (get-AzStorageShare -Name $profileShareName -Context $storageContext -ErrorAction SilentlyContinue)) {
     write-verbose ("File share $profileShareName does not exist.  Creating new share $profileShareName...")
     New-AzStorageShare -Name $profileShareName -Context $storageContext
 } else {
@@ -245,7 +251,7 @@ if (!(get-AzStorageShare -Name $profileShareName -Context $storageContext -Error
 Write-Verbose ("Assigning IAM roles for access to the $profileShareName share...")
 
 if (Get-AdGroup -Identity $ShareAdminGroupName) {
-    write-verbose ("Getting ObjectID for AAD group $ShareadminGroupName...")
+    write-verbose ("Getting ObjectID for AAD group $ShareAdminGroupName...")
     $filter = "Displayname eq '$ShareAdminGroupName'"
     $elevatedContributorObjectId = (Get-AzureADGroup -filter $filter).ObjectId
     if ($true -ne $?) {
@@ -263,12 +269,12 @@ if (get-AdGroup -Identity $ShareUserGroupName) {
     $filter = "Displayname eq '$ShareUserGroupName'"
     $ContributorObjectId = (Get-AzureADGroup -filter $filter).ObjectId
     if ($true -ne $?) {
-        write-warning ( "Error retrieving information for group $ShareUSerGroupName.  Check the name and try again.")
+        write-warning ( "Error retrieving information for group $ShareUserGroupName.  Check the name and try again.")
         exit
     }
     write-verbose("Object ID for AAD group $ShareUserGroupName is $ContributorObjectId")
 } else {
-    write-warning "Group $ShareUserroupName not found in AD!"
+    write-warning "Group $ShareUserGroupName not found in AD!"
     exit 
 }
 
@@ -286,13 +292,14 @@ $result = New-AzRoleAssignment -RoleDefinitionName "Storage File Data SMB Share 
 #Step 6 Map Drive with storage Key / Set NTFS permissions on root
 #################################
 #
-#  Here's what I've been using specific to WVD / FSLogix
+#  This sets a minimal level of permissions to align with https://docs.microsoft.com/en-us/fslogix/fslogix-storage-config-ht
 #
+#  
 
 #below needed for setting NTFS rights on file system - can also do manually
 $ShareName		= $profileShareName
 $drive 			= "Y:"
-$path = $Drive + "\"
+$path           = $Drive + "\"
 $Mapkey = (Get-AzStorageAccountKey -ResourceGroupName $storageAccountRGName -Name $storageAccountName).value[0]
 
 ################################
@@ -323,7 +330,7 @@ $acl = Get-Acl $path
 
 # from https://blog.netwrix.com/2018/04/18/how-to-manage-file-system-acls-with-powershell-scripts/
 ##############################################################
-# clears existing users rights (for Azure Files)
+# remove the existing entry for "Users" from the ACL
 ##############################################################
 write-verbose ("Removing Users...")
 $acl = Get-Acl $path
@@ -331,6 +338,12 @@ $usersid = New-Object System.Security.Principal.Ntaccount ("Users")
 $acl.PurgeAccessRules($usersid)
 $acl | Set-Acl $path
 
+
+write-verbose ("Removing Authenticated Users...")
+$acl = Get-Acl $path
+$usersid = New-Object System.Security.Principal.Ntaccount ("Authenticated Users")
+$acl.PurgeAccessRules($usersid)
+$acl | Set-Acl $path
 ## used information from https://win32.io/posts/How-To-Set-Perms-With-Powershell
 
 #############################################################
@@ -345,22 +358,21 @@ $acl | Set-Acl $path
 #############################################################
 # set " Domain Administrators / Subfolders and Files Only / Modify
 #############################################################
-write-verbose ("Adding Admins...")
-$Admins = $Domain.netbiosname + "\Domain Admins"
+write-verbose ("Adding Administrators (full control)...")
 $acl = Get-Acl $path
-$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $admins, "FullControl", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
+$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList "Administrators", "FullControl", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
 $acl.SetAccessRule($rule)
 $result = $acl | Set-Acl -Path $path
 
-# set "Users / This Folder Only / Modify
-write-verbose ("Adding Authenticated Users...")
+# set Users / This Folder Only / Modify
+write-verbose ("Adding Users (modify)...")
 $acl = Get-Acl $path
-$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList "NT AUTHORITY\Authenticated Users", "Modify,Synchronize", "None", "None", "Allow"
+$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList "Users", "Modify,Synchronize", "None", "None", "Allow"
 $acl.SetAccessRule($rule)
 $result = $acl | Set-Acl -Path $path
 
-# set "Creator Owner / Subfolders and Files Only / Modify
-write-verbose ("Adding CREATOR OWNER...")
+# set Creator Owner / Subfolders and Files Only / Modify
+write-verbose ("Adding CREATOR OWNER (modify)...")
 $acl = Get-Acl $path
 $rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList "CREATOR OWNER", "Modify,Synchronize", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
 $acl.SetAccessRule($rule)
@@ -374,6 +386,6 @@ $result = $acl | Set-Acl -Path $path
 
 Write-Verbose ("Disconnecting from file share...")
 # Disconnect the mounted file share
-Remove-SmbMapping -LocalPath $drive -Force
+Remove-SmbMapping -LocalPath $drive -Force | Out-Null
 
 Write-Verbose ("Execution complete.")
