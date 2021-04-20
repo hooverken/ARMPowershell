@@ -312,7 +312,7 @@ if ($isGovCloud) {
     $MapPath = "\\"+$storageAccountName+".file.core.windows.net\"+$sharename
 }
 
-write-verbose ("Mounting the $profileShareName share...")
+write-verbose ("Mounting the $shareName share...")
 $result = new-smbmapping -LocalPath $drive -RemotePath $MapPath -UserName $storageAccountName -Password $Mapkey -Persistent $false
 
 if (!($result.status -eq "OK")) {
