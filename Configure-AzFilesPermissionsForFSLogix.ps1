@@ -36,7 +36,6 @@ if ($null -eq $currentContext) {
     Write-Verbose ("Connection to Azure Confirmed.")
 }
 
-exit 
 # Make sure we're connected to Azure AD
 if ($null -eq (Get-AzureADCurrentSessionInfo)) {
     if (get-command Connect-AzureAd) {

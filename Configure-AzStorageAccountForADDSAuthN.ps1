@@ -1,4 +1,4 @@
-# Configure-AzFilesForADDSAuthN.ps1
+# Configure-AzStorageAccountForADDSAuthN.ps1
 
 # This script configures an Azure Files share for authentication using ADDS Authentication
 # 
@@ -154,6 +154,7 @@ if (!($updateresult)) {
 #Step 4 Confirm settings
 #################################
 
+Write-verbose ("Verifying...")
 # Get the target storage account
 $storageaccount = Get-AzStorageAccount -ResourceGroupName $storageAccountRGName -Name $storageAccountName
 
