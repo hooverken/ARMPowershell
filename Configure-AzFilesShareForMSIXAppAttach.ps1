@@ -156,7 +156,7 @@ $result = $acl | Set-Acl -Path $path
 
 write-verbose ("Adding `"$AppAttachComputersADDSGroupName`" to NTFS ACL on the file share (ReadAndExecute)...")
 $acl = Get-Acl $path
-$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $AppAttachComputersADDSGroupName, "Read", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
+$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $AppAttachComputersADDSGroupName, "ReadAndExecute", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
 $acl.SetAccessRule($rule)
 $result = $acl | Set-Acl -Path $path
 
