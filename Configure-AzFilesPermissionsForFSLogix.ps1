@@ -1,6 +1,6 @@
-# Set-AzFilesPermissionsForFSLogix.ps1
+# Configure-AzFilesPermissionsForFSLogix.ps1
 # by Ken Hoover <ken dot hoover at microsoft dotcom>
-# March 2021
+# April 2021
 
 # This script does the IAM role assignments and NTFS permission configuration on an Azure Files share to prepare 
 # it for use with FSLogix.
@@ -47,16 +47,17 @@ if ($null -eq (Get-AzureADCurrentSessionInfo)) {
         exit
     }
 } else {
-    Write-Verbose ("Connection to Azure Confirmed.")
+    Write-Verbose ("Connection to Azure AD Confirmed.")
 }
 
 
-# Confirm that the storage account specified actually exists, that we can connect to it and grab the name of the RG that it's in
+# Confirm that the storage account specified actually exists, that we can connect to it and grab the name of the 
+# RG that it's in.  Yes this is inefficient but this way we don't need to bug the user for the storage accounts'
+# RG name.
 write-verbose ("Verifying that $storageAccountName exists.  This will take a moment..." )
 $storageAccount = Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $storageAccountName }
 
 if ($storageAccount) {
-
     # Grab the RG name that the storage account is in since we'll need it.
     $storageAccountRGName = $storageaccount.ResourceGroupName
     write-verbose "$storageAccountName is in Resource Group $storageAccountRGName."
@@ -64,8 +65,9 @@ if ($storageAccount) {
     # Verify that we can connect to the storage account's files endpoint on port 445
     Write-Verbose ("Testing connectivity to " + $storageAccount.PrimaryEndpoints.File + " on port TCP/445...")
     if ($storageAccount.PrimaryEndpoints.File -match '\/\/(\S+)\/') {  # Matches the fqdn portion of the URL
-        if (Test-NetConnection -port 445 -ComputerName $Matches[1] -InformationLevel Quiet) {
-            write-verbose ("Connection test to $matches[0] on port 445/TCP successful.")
+        $filesEndpoint = $Matches[1]
+        if (Test-NetConnection -port 445 -ComputerName $filesEndpoint -InformationLevel Quiet) {
+            write-verbose ("Connection test to $filesEndpoint on port 445/TCP successful.")
         } else {
             write-warning ("Unable to connect to $filesEndpointFqdn on port TCP/445.")
             exit 
@@ -87,6 +89,7 @@ if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD
     exit 
 }
 
+exit 
 
 # Configuring IAM roles on the Azure Files share as required for FSLogix
 
