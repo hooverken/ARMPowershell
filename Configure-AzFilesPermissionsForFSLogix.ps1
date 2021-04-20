@@ -51,7 +51,7 @@ if ($null -eq (Get-AzureADCurrentSessionInfo)) {
 
 
 # Confirm that the storage account specified actually exists, that we can connect to it and grab the name of the 
-# RG that it's in.  Yes this is inefficient but this way we don't need to bug the user for the storage accounts'
+# RG that it's in.  Yes this is inefficient but this way we don't need to bug the user for the storage account's
 # RG name.
 write-verbose ("Verifying that $storageAccountName exists.  This will take a moment..." )
 $storageAccount = Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $storageAccountName }
@@ -87,8 +87,6 @@ if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD
     write-warning ("Storage account $storageAccountName is not configured for ADDS authentication.  Exiting.")
     exit 
 }
-
-exit 
 
 # Configuring IAM roles on the Azure Files share as required for FSLogix
 
@@ -150,8 +148,6 @@ $result = New-AzRoleAssignment -RoleDefinitionName "Storage File Data SMB Share 
 
 write-verbose ("Assigning role `Storage File Data SMB Share Elevated Contributor to ObjectID $elevatedContributorObjectID...")
 $result = New-AzRoleAssignment -RoleDefinitionName "Storage File Data SMB Share Elevated Contributor" -Scope $scope -ObjectId $elevatedContributorObjectId
-
-
 
 
 ################################
