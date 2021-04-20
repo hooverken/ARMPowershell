@@ -69,9 +69,8 @@ This group should contain _all users that will be using the FSLogix profile shar
 ### IsGovCloud (ONLY FOR Azure Gov Cloud)
 <ul>
 Add this parameter if you are working in Azure Gov Cloud.  This is necessary because the SPN format for the kerberos configuration is different between the public and government clouds.
-
-![Screenshot](https://github.com/hooverken/ARMPowershell/blob/main/Configure-AzFilesForADDSAuthNScreenshot.PNG)
 </ul>
+![Screenshot](https://github.com/hooverken/ARMPowershell/blob/main/Configure-AzFilesForADDSAuthNScreenshot.PNG)
 ---
 
 # Configure-AzFilesForADDSAuthentication.ps1
