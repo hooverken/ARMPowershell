@@ -37,7 +37,7 @@ if ($null -eq $currentContext) {
 }
 
 # Make sure we're connected to Azure AD
-if ($null -eq (Get-AzureADCurrentSessionInfo)) {
+if ($null -eq (Get-AzureADCurrentSessionInfo -ErrorAction SilentlyContinue )) {
     if (get-command Connect-AzureAd) {
         Write-Verbose ("Not connected to Azure.  Please log in.")
         Connect-AzAccount
@@ -190,39 +190,23 @@ $acl = Get-Acl $path
 # $acl.Access | where IsInherited -eq $false #Gets all non inherited rules.
 
 # from https://blog.netwrix.com/2018/04/18/how-to-manage-file-system-acls-with-powershell-scripts/
-##############################################################
-# clears existing users rights (for Azure Files)
-##############################################################
-write-verbose ("Clearing the ACL  entry for `"Users`" for the share...")
-$acl = Get-Acl $path
-$usersid = New-Object System.Security.Principal.Ntaccount ("Users")
-$acl.PurgeAccessRules($usersid)
-$acl | Set-Acl $path
 
-## Ref: https://win32.io/posts/How-To-Set-Perms-With-Powershell
+##############################################################
+# Remove existing entry for "Users" (since we're going to replace it)
 
-#############################################################
-# set " Domain Administrators / Subfolders and Files Only / Modify
-write-verbose ("Adding Domain Admins...")
-$Admins = $Domain.netbiosname + "\Domain Admins"
+write-verbose ("Setting Users (Modify)...")
 $acl = Get-Acl $path
-$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $admins, "FullControl", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
+$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList "Users", "Modify,Synchronize", "ContainerInherit,ObjectInherit", "None", "Allow"
 $acl.SetAccessRule($rule)
 $result = $acl | Set-Acl -Path $path
 
-# set "Users / This Folder Only / Modify
-write-verbose ("Adding Authenticated Users...")
-$acl = Get-Acl $path
-$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList "NT AUTHORITY\Authenticated Users", "Modify,Synchronize", "None", "None", "Allow"
-$acl.SetAccessRule($rule)
-$result = $acl | Set-Acl -Path $path
-
-# set "Creator Owner / Subfolders and Files Only / Modify
-write-verbose ("Adding CREATOR OWNER...")
+# CREATOR OWNER / Subfolders and Files Only / Modify
+write-verbose ("Setting CREATOR OWNER (modify)...")
 $acl = Get-Acl $path
 $rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList "CREATOR OWNER", "Modify,Synchronize", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
 $acl.SetAccessRule($rule)
 $result = $acl | Set-Acl -Path $path
+
 
 ##############################################################
 #  Uncomment to list out the resulting ACL on the share.
