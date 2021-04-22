@@ -37,16 +37,16 @@ if ($null -eq $currentContext) {
 }
 
 # Make sure we're connected to Azure AD
-if ($null -eq (Get-AzureADCurrentSessionInfo -ErrorAction SilentlyContinue )) {
+if ($null -eq (Get-AzureADTenantDetail -ErrorAction SilentlyContinue )) {
     if (get-command Connect-AzureAd) {
-        Write-Verbose ("Not connected to Azure.  Please log in.")
+        Write-Verbose ("Not connected to Azure.  Please log in with Connect-AzureAD.")
         Connect-AzAccount
     } else {
         write-warning ("You must connect to Azure with Connect-AzAccount before running this script.")
         exit
     }
 } else {
-    Write-Verbose ("Connection to Azure AD Confirmed.")
+    Write-Verbose ("Connection to Azure AD tenant " + (Get-AzureADTenantDetail).ObjectId + " verified.")
 }
 
 
