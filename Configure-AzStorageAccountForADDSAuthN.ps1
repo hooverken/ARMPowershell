@@ -1,11 +1,11 @@
 # Configure-AzStorageAccountForADDSAuthN.ps1
+# by Ken Hoover <ken dot hoover at micriosoft dotcom>
 
-# This script configures an Azure Files share for authentication using ADDS Authentication
+# This script configures an Azure storage account for authentication using ADDS Authentication
 # 
-# Based on work by version by John Kelbley <johnkel at Microsoft dotcom>
-# Scriptified/Parameterized by Ken Hoover <ken dot hoover at Microsoft dotcom>
+# Based on work by John Kelbley <johnkel at Microsoft dotcom>
 
-# February 2021
+# April 2021
 
 ###############################################################################################################
 #  This is the "Manual" process to configure AD authentication for Azure Files
@@ -23,17 +23,9 @@
 #
 ###############################################################################################################
 #
-# CHANGELOG
 #
-# 11 Jan 2021 : Find storageAccountRGName for ourselves instead of forcing the user to provide it.
-# 24 Feb 2021 : Modified original script to only do the ADDS stuff by cutting out everything after section 3
-#               and removing the now-unnecessary paramters and dependencies.
-#
-#
-############################################################################
-# Required parameters - make sure you have all of this info ahead of time
-############################################################################
-#
+
+
 [CmdletBinding()]
 param(
     [Parameter(mandatory = $true)][string]$storageAccountName,      # The name of the storage account with the share
@@ -50,7 +42,7 @@ if ($null -eq $currentContext) {
     exit
 }
 
-# Storage account name needs to be < 15 characters to avoid risk of hitting legacy NetBIOS limits in AD
+# Storage account name needs to be <= 15 characters to avoid risk of hitting legacy NetBIOS limits in AD
 if ($storageAccountName.Length -ge 15) {
     write-warning ("Storage account name (" + $storageAccountName.Length + ") is over 15 characters.  Please use a shorter name to avoid issues.")
     exit
@@ -74,8 +66,7 @@ if ($storageAccount) {
 }
 
 #######################################################################
-#Step 2 Create Computer Account and SPN, and get AD information
-#######################################################################
+#Step 2 Create Computer Account and SPN; get AD information
 
 # AD Settings - These pull the info we need about the AD domain/forest:
 $Forest = Get-ADForest
@@ -87,9 +78,9 @@ if ((!($Forest)) -or (!($Domain))) {
 }
 
 # For Azure Commercial
-# SPN should look like:		cifs/your-storage-account-name-here.file.core.windows.net	
+# SPN looks like    :		cifs/your-storage-account-name-here.file.core.windows.net	
 # For Gov looks like:		cifs/your-storage-account-name-here.file.core.usgovcloudapi.net 
-#
+
 if ($isGovCloud)  {
 	$SPN = "cifs/$storageAccountName.file.core.usgovcloudapi.net" 
 } Else { 

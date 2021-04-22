@@ -151,20 +151,17 @@ $result = New-AzRoleAssignment -RoleDefinitionName "Storage File Data SMB Share 
 
 
 ################################
-#Step 6 Map Drive with storage Key / Set NTFS permissions on root
+# Map Drive with storage Key / Set NTFS permissions on root
 #################################
-#
-#  Here's what I've been using specific to WVD / FSLogix
-#
 
-#below needed for setting NTFS rights on file system - can also do manually
+# below needed for setting NTFS rights on file system - can also do manually
 $ShareName		= $profileShareName
 $drive 			= "Y:"
 $path = $drive + "\"
 $Mapkey = (Get-AzStorageAccountKey -ResourceGroupName $storageAccountRGName -Name $storageAccountName).value[0]
 
 ################################
-# Note that the next line is for Azure Commercial - must change DNS suffix for sofisgovverign clouds
+# Note that the next line is for Azure Commercial - must change DNS suffix for soverign clouds
 #   Azure Gov:  .file.core.usgovcloudapi.net
 ################################
 if ($isGovCloud) {
@@ -192,9 +189,9 @@ $acl = Get-Acl $path
 # from https://blog.netwrix.com/2018/04/18/how-to-manage-file-system-acls-with-powershell-scripts/
 
 ##############################################################
-# Remove existing entry for "Users" (since we're going to replace it)
+# Modify existing entry for "Users"
 
-write-verbose ("Setting Users (Modify)...")
+write-verbose ("Setting Users (modify)...")
 $acl = Get-Acl $path
 $rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList "Users", "Modify,Synchronize", "ContainerInherit,ObjectInherit", "None", "Allow"
 $acl.SetAccessRule($rule)
