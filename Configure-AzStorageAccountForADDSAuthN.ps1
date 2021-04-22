@@ -25,6 +25,7 @@
 #
 #
 
+#requires -runasAdministrator
 
 [CmdletBinding()]
 param(
