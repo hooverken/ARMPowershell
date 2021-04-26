@@ -3,116 +3,82 @@ Miscellaneous Powershell scripts for use with Azure ARM
 
 ## Contents
 
-* **Configure-AzFilesForADDSandFSLogix.ps1** - Configures an Azure Files share for use with FSLogix including IAM role assignments and NTFS permissions.
-* **Configure-AzFilesForADDSAuthN.ps1** - Configures an Azure storage account to use [Active Directory (ADDS) authentication](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-active-directory-enable).  This is intended as an alternative to the AzFilesHybrid module wihich is referenced in the above link.
-* **Configure-AzFilesForMSIXAppAttach.ps1** - Configures an Azure Files share permissions for use with [MSIX App Attach](https://docs.microsoft.com/en-us/azure/virtual-desktop/what-is-app-attach) and [Windows Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/)
+
+* **Configure-AzStorageAccountForADDSAuthN.ps1** - Configures an Azure storage account to use [Active Directory (ADDS) authentication](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-active-directory-enable).  This is intended as an alternative to the AzFilesHybrid module wihich is referenced in the above link.
+* **Configure-AzFilesShareForFSLogixProfileContainers.ps1** - Applies the necessary IAM role assignments and NTFS permissions structure for an [Azure Files](https://azure.microsoft.com/en-us/services/storage/files/) share to work correctly with [FSlogix profile containers](https://docs.microsoft.com/en-us/azure/virtual-desktop/fslogix-containers-azure-files).
+* **Configure-AzFilesShareForMSIXAppAttach.ps1** - Configures an Azure Files share permissions for use with [MSIX App Attach](https://docs.microsoft.com/en-us/azure/virtual-desktop/what-is-app-attach) and [Windows Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/)
 * **Exterminate-AzureVM.ps1** - Deletes all elements of an Azure VM (compute, OS disk, data disks and NICs)
 
 
 All scripts support the `-Verbose` parameter.  It is recommended to use this to view progress as the scripts run.
 
 ---
-# Configure-AzFilesForADDSandFSLogix.ps1
 
-This is intended for use in scenarios where you are configuring [Windows Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/) environments to work with [FSLogix Profile containers](https://docs.microsoft.com/en-us/fslogix/configure-profile-container-tutorial) stored on file shares in [Azure Files](https://docs.microsoft.com/en-us/azure/storage/files/) as the location for the profile share and Active Directory Domain services (NOT Azure Active Directory Domain Services!) as the authentication mechanism.
-
-It handles does the necessary configuration in both the local AD and in Azure so once you run it (cleanly) you can move on to FSLogix installation and configuration.
-
-This is intended for use in place of the [AzFilesHybrid Powershell module](https://github.com/Azure-Samples/azure-files-samples/releases) which myself and others have found to be clunky and unreliable.  This script works by automating the approach described in the "manual" steps to configure the storage account.
-
-This script will create a computer object in AD to represent the Kerberos identity for authentication.  The computer object will have the same username as the storage account.  **Do not delete this object** or you will break the ADDS authentication
-
-This script is based on work by John Kelbley, a member of the GBB team at Microsoft.
-
-The script does do a fair amount of sanity checking to avoid "normal" errors but is not bulletproof.
+# Configure-AzStorageAccountForADDSAuthN.ps1
 
 
-## Parameters
+This script configures an Azure storage account for ADDS Authentication as described [here](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-active-directory-enable).  It handles the necessary configuration in both the local AD and in Azure.
 
-### storageAccountName
+This is intended for use in place of the [AzFilesHybrid Powershell module](https://github.com/Azure-Samples/azure-files-samples/releases) which myself and others have found to be clunky and unreliable.  It works by automating the approach described in the "manual" steps to configure the storage account.
 
-<ul>
-The name of the storage account that holds the Azure Files share.
+This script will create a computer object in the local AD to represent the Kerberos identity for authentication.  The computer object will have the same username as the storage account.  **Do not delete this object** or you will break the ADDS authentication
 
-ADVISORY: The name of the storage account must be 15 characters or less to avoid legacy netBIOS issues.  Execution will be halted if the storage account name exceeds this limit.
+This script is based on prior work by John Kelbley, a member of the GBB team at Microsoft.
+
+## **Parameters**
+
+### **storageAccountName**
+
+<ul>The name of the target storage account.  
+
+**ADVISORY**: The name of the storage account must be 15 characters or less in length to avoid legacy netBIOS issues.  Execution will be halted if the storage account name exceeds this limit.  This can be a challenge in environments with complex naming conventions.
 </ul>
 
-### profileShareName
 
-<ul>
-The name of the Azure Files share that you will use for FSLogix profiles.
-
-If the share does not exist in the specified storage account, it will be created.
-</ul>
-
-### ADOuDistinguishedName
-
-<ul>The full DN of an OU for the new computer object to be created in.
-
-Example: `OU=WVD,DC=contoso,DC=com`
-</ul>
-
-### ShareAdminGroupName
-<ul>
-The name of an AD group that will be granted the "Storage File Data SMB Share Elevated Contributor" IAM role on the Azure Files share.
-
-The membership of this group should be people who will need full access to see the contents of the Profiles share for some reason.
-</ul>
-
-### ShareUserGroupName
-<ul>
-The name of an AD group which will be granted the "Storage File Data SMB Share Elevated Contributor" IAM role on the Azure Files share.
-
-This group should contain _all users that will be using the FSLogix profile sharing environment_ (e.g. all WVD users).
-</ul>
-
-### IsGovCloud (ONLY FOR Azure Gov Cloud)
-<ul>
-Add this parameter if you are working in Azure Gov Cloud.  This is necessary because the SPN format for the kerberos configuration is different between the public and government clouds.
-</ul>
-![Screenshot](https://github.com/hooverken/ARMPowershell/blob/main/Configure-AzFilesForADDSAuthNScreenshot.PNG)
----
-
-# Configure-AzFilesForADDSAuthentication.ps1
-
-This script configures an Azure storage account to use Active Directory (ADDS) for authentication.
-
-It does the necessary configuration in both the local AD and in Azure so once you run it (cleanly) it should work as expected. 
-
-Like the one above, this is intended for use in place of the [AzFilesHybrid Powershell module](https://github.com/Azure-Samples/azure-files-samples/releases) which myself and others have found to be cranky and unreliable.
-
-It will create a computer object in AD to represent the Kerberos identity for authentication.  The computer object will have the same username as the storage account.  Do not annoy, molest, feed or otherwise disturb this account as it will break authentication.
-
-This is based on earlier work by John Kelbley, a WVD GBB at Microsoft, which parallels the steps under "Option 2" of the [documentation](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-ad-ds-enable#option-2-manually-perform-the-enablement-actions) for enabling ADDS Authentication for Azure Files shares.
-
-The script does do a fair amount of sanity checking to avoid "normal" errors but is not bulletproof.
-
-It is strongly recommended to run with the `-Verbose` parameter for more detail on what it is doing.
-
-## Parameters
-
-### storageAccountName
-<ul>
-The name of the storage account that holds the Azure Files share.
-
-The name of the storage account must be 15 characters or less to avoid legacy netBIOS issues.
-</ul>
-
-### ADOuDistinguishedName
+### **ADOuDistinguishedName**
 <ul>
 The full DN of an OU for the new computer object to be created in.
 
 Example: `OU=MyOUName,DC=contoso,DC=com`
 </ul>
 
-### IsGovCloud (ONLY FOR Azure Gov Cloud)
+### **IsGovCloud** (ONLY FOR Azure Gov Cloud)
 <ul>
 Add this parameter if you are working in Azure Gov Cloud.  This is necessary because the SPN format for the kerberos configuration is different between the public and government clouds.
 </ul>
 
+![Screenshot](https://github.com/hooverken/ARMPowershell/blob/main/Configure-AzFilesForADDSAuthNScreenshot.PNG)
+
 ---
 
-# Configure-AzFilesForMSIXAppAttach.ps1
+# Configure-AzFilesShareForFSLogixProfileContainers.ps1
+
+This script applies the necessary Azure IAM role assignments and NTFS ACLs changes to configure an [Azure Files](https://azure.microsoft.com/en-us/services/storage/files/) share for use with [FSLogix Profile Containers](https://docs.microsoft.com/en-us/azure/virtual-desktop/create-file-share). 
+
+It is strongly recommended to run with the `-Verbose` parameter for more detail on what it is doing.
+
+## Parameters
+
+### **storageAccountName**
+<ul>
+The name of the storage account that holds the Azure Files share.  It is assumed that this share is configured for ADDS authentication.
+</ul>
+
+### **ProfileShareName**
+
+<ul>The name of the file share to use.  If this share name does not exist it will be created for you.  If the filename contains mixed case characters it will be converted to all-lowercase as required by Azure Files.  For the full list of share name constraints see [this link](https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-shares--directories--files--and-metadata#share-names)
+</ul>
+
+### **ShareAdminGroupName**
+<ul>The name of an Active directory group which contains users that should have privileged (full control) access to the Azure Files share.  This group must be synced to Azure AD.</ul>
+
+### **ShareUserGroupName**
+<ul>The name of an Active directory group which contains end users that will have their profiles stored on the Azure Files share.  This group must be synced to Azure AD.</ul>
+
+
+---
+
+# Configure-AzFilesShareForMSIXAppAttach.ps1
 
 This script applies the necessary permissions (both IAM role assignments and NTFS ACLs) to configure an [Azure Files](https://azure.microsoft.com/en-us/services/storage/files/) share for use with [MSIX App Attach](https://docs.microsoft.com/en-us/azure/virtual-desktop/what-is-app-attach) and [Windows Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/).
 
@@ -124,23 +90,31 @@ This script applies the necessary permissions (both IAM role assignments and NTF
 The name of the file share to configure.  If this share does not exist, it will be created.
 </ul>
 
-### AppAttachSessionHostManagedIdAADGroupName
-<ul>The name of an **Azure AD group** containing the managed identities of the WVD session hosts that will be using the share.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
+
+### **shareName**
+
+<ul>The name of the file share to use.  If this share name does not exist it will be created for you.  If the filename contains mixed case characters it will be converted to all-lowercase as required by Azure Files.  For the full list of Azure Files share name constraints see [this link](https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-shares--directories--files--and-metadata#share-names)
 </ul>
 
-### AppAttachUsersADDSGroupName
-<ul>The name of an **onprem AD group** containing the managed identities of the WVD session hosts that will be using the share.  This group must be synchronized to Azure AD.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
+### **AppAttachSessionHostManagedIdAADGroupName**
+<ul>The name of an **Azure AD group** containing the [system-managed identities](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-managed-identities-work-vm) of the WVD session hosts that will be using the share.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.<br><br>
+IMPORTANT:  These identities are **not the same thing** as device objects that are synced from onprem AD (if device sync is enabled)
 </ul>
 
-### AppAttachComputersADDSGroupName
-<ul>The name of an **onprem AD group** containing the computer objects of the WVD session hosts that will be using the share.  This group must be synchronized to Azure AD.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
+### **AppAttachUsersADDSGroupName**
+<ul>The name of an <b>onprem AD group</b> containing the managed identities of the WVD session hosts that will be using the share.  This group must be synchronized to Azure AD.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
 </ul>
 
-### IsGovCloud
-<ul>*This parameter is optional.  If not specified the default is to use the Azure commercial cloud.*
+### **AppAttachComputersADDSGroupName**
+<ul>The name of an <b>onprem AD group</b> containing the computer objects of the WVD session hosts that will be using the share.  This group must be synchronized to Azure AD.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
+</ul>
+
+### **IsGovCloud**
+<ul><b>This parameter is optional.  If not specified the default is to use the Azure commercial cloud.</b><br><br>
 
 If you are working with a US Gov Cloud Azure environment, add this parameter to the command line.  This is necessary because the Azure Files endpoint name suffixes are different for Giv cloud vs the commercial (public) cloud.
 </ul>
+
 ---
 
 # Exterminate-AzureVM.ps1
