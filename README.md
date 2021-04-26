@@ -29,23 +29,15 @@ This script is based on prior work by John Kelbley, a member of the GBB team at 
 
 ### **storageAccountName**
 
-<ul>The name of the target storage account.  
-
-**ADVISORY**: The name of the storage account must be 15 characters or less in length to avoid legacy netBIOS issues.  Execution will be halted if the storage account name exceeds this limit.  This can be a challenge in environments with complex naming conventions.
-</ul>
-
+The name of the target storage account. The name of the storage account must be 15 characters or less in length to avoid legacy netBIOS issues.  This can be a challenge in environments with complex naming conventions.
 
 ### **ADOuDistinguishedName**
-<ul>
 The full DN of an OU for the new computer object to be created in.
 
 Example: `OU=MyOUName,DC=contoso,DC=com`
-</ul>
 
 ### **IsGovCloud** (ONLY FOR Azure Gov Cloud)
-<ul>
 Add this parameter if you are working in Azure Gov Cloud.  This is necessary because the SPN format for the kerberos configuration is different between the public and government clouds.
-</ul>
 
 ![Screenshot](https://github.com/hooverken/ARMPowershell/blob/main/Configure-AzFilesForADDSAuthNScreenshot.PNG)
 
@@ -60,20 +52,18 @@ It is strongly recommended to run with the `-Verbose` parameter for more detail 
 ## Parameters
 
 ### **storageAccountName**
-<ul>
 The name of the storage account that holds the Azure Files share.  It is assumed that this share is configured for ADDS authentication.
-</ul>
 
 ### **ProfileShareName**
 
-<ul>The name of the file share to use.  If this share name does not exist it will be created for you.  If the filename contains mixed case characters it will be converted to all-lowercase as required by Azure Files.  For the full list of share name constraints see [this link](https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-shares--directories--files--and-metadata#share-names)
-</ul>
+The name of the file share to use.  If this share name does not exist it will be created for you.  If the filename contains mixed case characters it will be converted to all-lowercase as required by Azure Files.<br><br>  For the full list of share name constraints see [this link](https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-shares--directories--files--and-metadata#share-names)
+
 
 ### **ShareAdminGroupName**
-<ul>The name of an Active directory group which contains users that should have privileged (full control) access to the Azure Files share.  This group must be synced to Azure AD.</ul>
+The name of an Active directory group which contains users that should have privileged (full control) access to the Azure Files share.  This group must be synced to Azure AD.
 
 ### **ShareUserGroupName**
-<ul>The name of an Active directory group which contains end users that will have their profiles stored on the Azure Files share.  This group must be synced to Azure AD.</ul>
+The name of an Active directory group which contains end users that will have their profiles stored on the Azure Files share.  This group must be synced to Azure AD.
 
 
 ---
@@ -84,33 +74,27 @@ This script applies the necessary permissions (both IAM role assignments and NTF
 
 ## Parameters
 
-### storageAccountName
-<ul>The name of the storage account for the file share
-### shareName
-The name of the file share to configure.  If this share does not exist, it will be created.
-</ul>
-
+### **storageAccountName**
+The name of the storage account for the file share
 
 ### **shareName**
 
-<ul>The name of the file share to use.  If this share name does not exist it will be created for you.  If the filename contains mixed case characters it will be converted to all-lowercase as required by Azure Files.  For the full list of Azure Files share name constraints see [this link](https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-shares--directories--files--and-metadata#share-names)
-</ul>
+The name of the file share to use.  If this share name does not exist it will be created for you.  If the filename contains mixed case characters it will be converted to all-lowercase as required by Azure Files.  <br><br>For the full list of Azure Files share name constraints see [this link](https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-shares--directories--files--and-metadata#share-names)
+
 
 ### **AppAttachSessionHostManagedIdAADGroupName**
-<ul>The name of an **Azure AD group** containing the [system-managed identities](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-managed-identities-work-vm) of the WVD session hosts that will be using the share.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.<br><br>
+The name of an **Azure AD group** containing the [system-managed identities](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-managed-identities-work-vm) of the WVD session hosts that will be using the share.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.<br><br>
 IMPORTANT:  These identities are **not the same thing** as device objects that are synced from onprem AD (if device sync is enabled)
-</ul>
+
 
 ### **AppAttachUsersADDSGroupName**
-<ul>The name of an <b>onprem AD group</b> containing the managed identities of the WVD session hosts that will be using the share.  This group must be synchronized to Azure AD.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
-</ul>
+The name of an <b>onprem AD group</b> containing the managed identities of the WVD session hosts that will be using the share.  This group must be synchronized to Azure AD.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
 
 ### **AppAttachComputersADDSGroupName**
-<ul>The name of an <b>onprem AD group</b> containing the computer objects of the WVD session hosts that will be using the share.  This group must be synchronized to Azure AD.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
-</ul>
+The name of an <b>onprem AD group</b> containing the computer objects of the WVD session hosts that will be using the share.  This group must be synchronized to Azure AD.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
 
 ### **IsGovCloud**
-<ul><b>This parameter is optional.  If not specified the default is to use the Azure commercial cloud.</b><br><br>
+<b>This parameter is optional.  If not specified the default is to use the Azure commercial cloud</b><br>
 
 If you are working with a US Gov Cloud Azure environment, add this parameter to the command line.  This is necessary because the Azure Files endpoint name suffixes are different for Giv cloud vs the commercial (public) cloud.
 </ul>
