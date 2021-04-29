@@ -3,7 +3,6 @@ Miscellaneous Powershell scripts for use with Azure ARM
 
 ## Contents
 
-
 * **Configure-AzStorageAccountForADDSAuthN.ps1** - Configures an Azure storage account to use [Active Directory (ADDS) authentication](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-active-directory-enable).  This is intended as an alternative to the AzFilesHybrid module wihich is referenced in the above link.<br><br>
 * **Configure-AzFilesShareForFSLogixProfileContainers.ps1** - Applies the necessary IAM role assignments and NTFS permissions structure for an [Azure Files](https://azure.microsoft.com/en-us/services/storage/files/) share to work correctly with [FSlogix profile containers](https://docs.microsoft.com/en-us/azure/virtual-desktop/fslogix-containers-azure-files).<br><br>
 * **Configure-AzFilesShareForMSIXAppAttach.ps1** - Configures an Azure Files share permissions for use with [MSIX App Attach](https://docs.microsoft.com/en-us/azure/virtual-desktop/what-is-app-attach) and [Windows Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/)<br><br>
@@ -24,6 +23,17 @@ This is intended for use in place of the [AzFilesHybrid Powershell module](https
 This script will create a computer object in the local AD to represent the Kerberos identity for authentication.  The computer object will have the same username as the storage account.  **Do not delete this object** or you will break the ADDS authentication
 
 This script is based on prior work by John Kelbley, a member of the GBB team at Microsoft.
+
+## **Prerequisites**
+
+It's best to run this script from an AD domain controller.
+
+* Make sure you are connected to the target Azure environment using the Az Powershell module
+* Must be connected to Azure as a user that has the ability to configure the storage account (e.g. `Owner`)
+* The ActiveDirectory Powershell module must be installed
+* Your Powershell session is running in an elevated (Administrator) context
+* You must have have permission to create computer objects in the target OU
+
 
 ## **Parameters**
 
@@ -49,6 +59,14 @@ This script applies the necessary Azure IAM role assignments and NTFS ACLs chang
 
 It is strongly recommended to run with the `-Verbose` parameter for more detail on what it is doing.
 
+## **Prerequisites**
+
+It's best to run this script from a system that is joined to the same AD that the Azure Files share is using for ADDS authentication.
+
+* Make sure you are connected to the target Azure environment using the Az Powershell module as a user which can create a file share on the target storage account
+* ALSO make sure you are connected to Azure AD with `Connect-AzureAD`
+* The ActiveDirectory Powershell module must be installed
+
 ## Parameters
 
 ### **storageAccountName**
@@ -72,6 +90,15 @@ The name of an Active directory group which contains end users that will have th
 # Configure-AzFilesShareForMSIXAppAttach.ps1
 
 This script applies the necessary permissions (both IAM role assignments and NTFS ACLs) to configure an [Azure Files](https://azure.microsoft.com/en-us/services/storage/files/) share for use with [MSIX App Attach](https://docs.microsoft.com/en-us/azure/virtual-desktop/what-is-app-attach) and [Windows Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/).
+
+## Prerequisites
+
+It's best to run this script from a system that is joined to the same AD that the storage account is using for authentication.
+
+* Make sure you are connected to the target Azure environment using the Az Powershell module as a user which can create a file share on the target storage account
+* ALSO make sure you are connected to Azure AD with `Connect-AzureAD`
+* The ActiveDirectory Powershell module must be installed
+
 
 ## Parameters
 
