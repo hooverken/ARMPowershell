@@ -39,7 +39,7 @@ Example: `OU=MyOUName,DC=contoso,DC=com`
 ### **IsGovCloud** (ONLY FOR Azure Gov Cloud)
 Add this parameter if you are working in Azure Gov Cloud.  This is necessary because the SPN format for the kerberos configuration is different between the public and government clouds.
 
-![Screenshot](https://github.com/hooverken/ARMPowershell/blob/main/Configure-AzFilesForADDSAuthNScreenshot.PNG)
+![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/ConfigureAzStorageAccountForADDAuthNScreenshot.PNG)
 
 ---
 
@@ -65,6 +65,7 @@ The name of an Active directory group which contains users that should have priv
 ### **ShareUserGroupName**
 The name of an Active directory group which contains end users that will have their profiles stored on the Azure Files share.  This group must be synced to Azure AD.
 
+![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/Configure-AzFilesShareForFSLogixProfileContainers.PNG)
 
 ---
 
@@ -99,6 +100,7 @@ The name of an <b>onprem AD group</b> containing the computer objects of the WVD
 If you are working with a US Gov Cloud Azure environment, add this parameter to the command line.  This is necessary because the Azure Files endpoint name suffixes are different for Giv cloud vs the commercial (public) cloud.
 </ul>
 
+![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/Configure-AzFilesShareForMSIXAppAttach.PNG)
 ---
 
 # Exterminate-AzureVM.ps1
