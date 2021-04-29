@@ -29,7 +29,7 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(mandatory = $true)][string]$storageAccountName,      # The name of the storage account with the share
+    [Parameter(mandatory = $true)][string]$storageAccountName,      # The name of the storage account to configure
     [Parameter(mandatory = $true)][string]$ADOuDistinguishedName,   # The full DN of the OU to put the new computer object in
     [Parameter(mandatory = $false)][switch]$IsGovCloud              # MUST add this parameter if you're working in Azure Gov Cloud, otherwise don't use it
 )
