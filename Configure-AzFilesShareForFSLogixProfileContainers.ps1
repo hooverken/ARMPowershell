@@ -131,12 +131,12 @@ if (get-AdGroup -Identity $ShareUserGroupName) {
     $filter = "Displayname eq '$ShareUserGroupName'"
     $ContributorObjectId = (Get-AzureADGroup -filter $filter).ObjectId
     if ($true -ne $?) {
-        write-warning ( "Error retrieving information for group $ShareUSerGroupName.  Check the name and try again.")
+        write-warning ( "Error retrieving information for group $ShareUserGroupName.  Check the name and try again.")
         exit
     }
     write-verbose("Object ID for AAD group $ShareUserGroupName is $ContributorObjectId")
 } else {
-    write-warning "Group $ShareUserroupName not found in AD!"
+    write-warning "Group $ShareUserGroupName not found in AD!"
     exit 
 }
 
