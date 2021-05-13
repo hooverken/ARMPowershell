@@ -23,7 +23,8 @@
 #
 ###############################################################################################################
 #
-#
+# CHANGELOG
+# 13 MAY 2021 : Check for AD enabled status before doing anything and removed storageAccountRGName variable
 
 #requires -runasAdministrator
 
@@ -49,25 +50,36 @@ if ($storageAccountName.Length -ge 15) {
     exit
 }
 
-# Confirm that the storage account specified actually exists and populate storageAccountRGName
+# Confirm that the storage account specified actually exists.
+# This method is inefficient and can take several seconds but doing it this way means that we don't need to ask the user for the RG name.
+# Since storage account names must be globally unique the chance of getting the "wrong" storage account from this is basically zero.
 write-verbose ("Verifying that $storageAccountName exists.  This will take a moment..." )
 $storageAccount = Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $storageAccountName}
-    
-if ($storageAccount) {
-    $storageAccountRGName = $storageaccount.ResourceGroupName
-    # Create a Kerb key for the storage account to use with ADDS
-    write-verbose ("Creating Kerberos key for storage account $storageAccountName")
-    New-AzStorageAccountKey -ResourceGroupName $storageAccountRGName -name $storageAccountName -KeyName kerb1 | Out-Null
-    $Keys = get-azstorageaccountkey -ResourceGroupName $storageAccountRGName -Name $storageAccountName -listkerbkey
-    $kerbkey = $keys | where-object {$_.keyname -eq 'kerb1'} 
-    $CompPassword = $kerbkey.value | ConvertTo-Securestring -asplaintext -force
+
+if ($null -ne $storageAccount) {
+    # First make sure that this storage account is not already configured for ADDS.  If so, exit so we don't touch it.
+    Write-verbose "Checking to see if this storage account is already configured for AD authentication..."
+    if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD") -and `
+        ($storageaccount.AzureFilesIdentityBasedAuth.ActiveDirectoryProperties.DomainName)) {
+        write-warning ("Storage account $storageAccountName is already configured to use domain " + ($storageaccount.AzureFilesIdentityBasedAuth.ActiveDirectoryProperties.DomainName + " for authentication."))
+        exit 
+    } else {
+        # The storage account is not configured for ADDS
+        # Create a Kerb key for the storage account to use with ADDS
+        write-verbose ("Creating Kerberos key for storage account $storageAccountName")
+        New-AzStorageAccountKey -ResourceGroupName $storageaccount.ResourceGroupName -name $storageAccount.StorageAccountName -KeyName kerb1 | Out-Null
+        $Keys = get-azstorageaccountkey -ResourceGroupName $storageaccount.ResourceGroupName -Name $storageAccount.StorageAccountName -listkerbkey
+        $kerbkey = $keys | where-object {$_.keyname -eq 'kerb1'} 
+        $CompPassword = $kerbkey.value | ConvertTo-Securestring -asplaintext -force
+    }
 } else {
+    # we didn't find the specified storage account name in the current scope.
     Write-Warning ("Storage account $storageAccountName not found.")
     exit
 }
 
 #######################################################################
-#Step 2 Create Computer Account and SPN; get AD information
+# Create Computer Account and SPN; get AD information
 
 # AD Settings - These pull the info we need about the AD domain/forest:
 $Forest = Get-ADForest
@@ -90,16 +102,16 @@ if ($isGovCloud)  {
 
 Write-Verbose "SPN for new account will be $SPN"
 
-if (Get-AzStorageAccount -Name $storageAccountName -ResourceGroupName $storageAccountRGName) {
+if (Get-AzStorageAccount -Name $storageAccount.StorageAccountName -ResourceGroupName $storageAccount.ResourceGroupName) {
 
     # Make sure the target OU DN actually exists just to make sure
     $OUlist = get-adobject -filter 'ObjectClass -eq "organizationalUnit"'
     if ($oulist.distinguishedName -contains $ADOuDistinguishedName) {
         if (get-ADComputer -Filter { Name -eq '$storageAccountName' } -ErrorAction SilentlyContinue) {
-            write-verbose ("Computer object $computeraccountName already exists in AD.")
+            write-verbose ("Computer object $storageAccountName already exists in AD.")
         } else {
             write-verbose ("Creating computer object in AD...")
-            $result = New-ADComputer -name $storageAccountName -path $ADOUDistinguishedName `
+            $result = New-ADComputer -name $storageAccount.StorageAccountName -path $ADOUDistinguishedName `
                 -Description "DO NOT DELETE - Azure File Share Authentication Account" `
                 -ServicePrincipalNames $SPN `
                 -PasswordNeverExpires $true `
@@ -111,10 +123,10 @@ if (Get-AzStorageAccount -Name $storageAccountName -ResourceGroupName $storageAc
         exit
     }
 } else {
-    write-warning ("Storage account $storageAccountName not found in RG $storageAccountRGName. Exiting")
+    write-warning ("Storage account " + $storageAccount.StorageAccountName + " not found in RG " + $storageAccount.ResourceGroupName + ". Exiting")
 }
 
-$Computer = get-ADComputer $storageAccountName  # The computer object in AD for the share.
+$Computer = get-ADComputer $storageAccount.StorageAccountName  # The computer object in AD for the share.
 
 # if you fail to create the account, it could be rights (often), but commonly the DN for the OU is wrong (folks guess at it!)
 # check to see what the DN actually is either in ADUC or pull all the OUs with the following command:
@@ -125,10 +137,10 @@ $Computer = get-ADComputer $storageAccountName  # The computer object in AD for 
 ###################################################
 #
 # Set the feature flag on the target storage account and provide the required AD domain information
-write-verbose ("Configuring storage account $storageAccountName for ADDS Authentication...")
+write-verbose ("Configuring " + $storageaccount.StorageAccountName + " for ADDS Authentication...")
 $updateresult = Set-AzStorageAccount `
-        -ResourceGroupName $storageAccountRGName `
-        -Name $storageAccountName `
+        -ResourceGroupName $storageaccount.ResourceGroupName `
+        -Name $storageaccount.StorageAccountName `
         -EnableActiveDirectoryDomainServicesForFile $true `
         -ActiveDirectoryDomainName $Domain.dnsroot `
         -ActiveDirectoryNetBiosDomainName $Domain.netbiosname `
@@ -143,16 +155,16 @@ if (!($updateresult)) {
 }
 
 #################################
-#Step 4 Confirm settings
+# Confirm settings
 #################################
 
 Write-verbose ("Verifying...")
-# Get the target storage account
-$storageaccount = Get-AzStorageAccount -ResourceGroupName $storageAccountRGName -Name $storageAccountName
+# Re-read the target storage account;s info and verify that it shows as AD enabled.
+$storageaccount = Get-AzStorageAccount -ResourceGroupName $storageaccount.ResourceGroupName -Name $storageAccount.StorageAccountName
 
 if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD") -and `
     ($storageaccount.AzureFilesIdentityBasedAuth.ActiveDirectoryProperties.DomainName)) {
-    write-verbose ("Storage account $storageAccountName is configured to use domain " + ($storageaccount.AzureFilesIdentityBasedAuth.ActiveDirectoryProperties.DomainName + " for authentication."))
+    write-verbose ("Storage account " + $storageaccount.StorageAccountName + " is configured to use domain " + ($storageaccount.AzureFilesIdentityBasedAuth.ActiveDirectoryProperties.DomainName + " for authentication."))
 } else {
     write-warning ("Storage account configuration does not match expectations.  Please check and try again.")
     exit 
