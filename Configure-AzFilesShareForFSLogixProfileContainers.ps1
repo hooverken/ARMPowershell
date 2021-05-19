@@ -14,6 +14,10 @@
 #  AzureAdPreview module is installed and connected to the proper directory tenant
 #  Az module is installed and connected to the proper Azure context (e.g. subscription)
 
+# CHANGELOG
+# 19 May 2021 : Detect if shared-key access is disabled and warn/exit if this is the case.  This breaks the NTFS
+#               permissions work that is necessary.
+
 [CmdletBinding()]
 param(
     [Parameter(mandatory = $true)][string]$storageAccountName,     # The name of the storage account with the share
@@ -75,6 +79,14 @@ if ($storageAccount) {
 } else {
     Write-Warning ("Storage account $storageAccountName not found.")
     exit
+}
+
+# Verify that the storage account does not have key AuthN disabled.
+# Ref: https://docs.microsoft.com/en-us/azure/storage/common/shared-key-authorization-prevent?tabs=portal
+if ($false -eq $storageaccount.AllowSharedKeyAccess) {
+    Write-Warning "Storage account " + $storageAccount.StorageAccountName + " is configured to prevent shared key access."
+    Write-Warning "Please enable shared key access to this account before running this script."
+    exit 
 }
 
 # Verify that the storage account is configured for ADDS Authentication

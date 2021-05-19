@@ -20,6 +20,7 @@
 # CHANGELOG
 #
 # 15 April 2021 - Initial version derived from Configure-AzFilesForADDSandFSLogix.ps1
+# 19 May 2021   - Added check that shared-key access is enabled (if it's disabled it breaks the NFTS permissions code)
 
 ############################################################################
 # Required parameters - make sure you have all of this info ahead of time
@@ -62,6 +63,14 @@ if ($storageAccount) {
 } else {
     Write-Warning ("Storage account $storageAccountName not found in current subscription.")
     exit
+}
+
+# Verify that the storage account does not have shared key AuthN disabled.
+# Ref: https://docs.microsoft.com/en-us/azure/storage/common/shared-key-authorization-prevent?tabs=portal
+if ($false -eq $storageaccount.AllowSharedKeyAccess) {
+    Write-Warning "Storage account " + $storageAccount.StorageAccountName + " is configured to prevent shared key access."
+    Write-Warning "Please enable shared key access to this account before running this script."
+    exit 
 }
 
 # Verify that the storage account is configured for ADDS AuthN

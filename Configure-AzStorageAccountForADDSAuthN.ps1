@@ -26,6 +26,7 @@
 # CHANGELOG
 # 13 MAY 2021 : Check for AD enabled status before doing anything and removed storageAccountRGName variable
 
+
 #requires -runasAdministrator
 
 [CmdletBinding()]
@@ -77,6 +78,7 @@ if ($null -ne $storageAccount) {
     Write-Warning ("Storage account $storageAccountName not found.")
     exit
 }
+
 
 #######################################################################
 # Create Computer Account and SPN; get AD information
