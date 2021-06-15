@@ -1,3 +1,6 @@
+#Requires -Modules "Az", "AzureADPreview"
+#Requires -PSEdition Core
+
 # Configure-AzFilesShareForMSIXAppAttach.ps1
 # by Ken Hoover <ken dot hoover at Microsoft dotcom>
 
@@ -21,6 +24,7 @@
 #
 # 15 April 2021 - Initial version derived from Configure-AzFilesForADDSandFSLogix.ps1
 # 19 May 2021   - Added check that shared-key access is enabled (if it's disabled it breaks the NFTS permissions code)
+# 15 June 2021  - Added Requires directives
 
 ############################################################################
 # Required parameters - make sure you have all of this info ahead of time
