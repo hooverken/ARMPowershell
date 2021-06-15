@@ -34,9 +34,9 @@
 param(
     [Parameter(mandatory = $true)][string]$storageAccountName,  # The name of the storage account with the share
     [Parameter(mandatory = $true)][string]$shareName,           # The name of the share.  The share will be created if it does not exist.
-    [Parameter(mandatory = $true)][string]$AppAttachSessionHostManagedIdAADGroupName,  # The name of an AD group containing the computer objects of the machines that need to use attached apps.  This group must be synchronized to AzureAD
+    [Parameter(mandatory = $true)][string]$AppAttachSessionHostManagedIdAADGroupName,  # The name of an AZURE AD group containing the managed identities of the VM's that will be using app attach
     [Parameter(mandatory = $true)][string]$AppAttachUsersADDSGroupName, # The name of an AD group containing users that can access attached apps
-    [Parameter(mandatory = $true)][string]$AppAttachComputersADDSGroupName, # The name of an AZURE AD group containing the managed identities of the VM's that will be using app attach
+    [Parameter(mandatory = $true)][string]$AppAttachComputersADDSGroupName, # The name of an AD group containing the computer objects of the machines that need to use attached apps.  This group must be synchronized to AzureAD
     [Parameter(mandatory = $false)][switch]$IsGovCloud         # MUST add this parameter if you're working in Azure Gov Cloud, otherwise don't use it
 )
 
