@@ -1,11 +1,11 @@
 # ARMPowershell
-Miscellaneous Powershell scripts for use with Azure ARM
+Miscellaneous PowerShell scripts for use with Azure ARM
 
 ## Contents
 
 * **Configure-AzStorageAccountForADDSAuthN.ps1** - Configures an Azure storage account to use [Active Directory (ADDS) authentication](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-active-directory-enable).  This is intended as an alternative to the AzFilesHybrid module wihich is referenced in the above link.<br><br>
 * **Configure-AzFilesShareForFSLogixProfileContainers.ps1** - Applies the necessary IAM role assignments and NTFS permissions structure for an [Azure Files](https://azure.microsoft.com/en-us/services/storage/files/) share to work correctly with [FSlogix profile containers](https://docs.microsoft.com/en-us/azure/virtual-desktop/fslogix-containers-azure-files).<br><br>
-* **Configure-AzFilesShareForMSIXAppAttach.ps1** - Configures an Azure Files share permissions for use with [MSIX App Attach](https://docs.microsoft.com/en-us/azure/virtual-desktop/what-is-app-attach) and [Windows Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/)<br><br>
+* **Configure-AzFilesShareForMSIXAppAttach.ps1** - Configures an Azure Files share permissions for use with [MSIX App Attach](https://docs.microsoft.com/en-us/azure/virtual-desktop/what-is-app-attach) and [Azure Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/)<br><br>
 * **Exterminate-AzureVM.ps1** - Deletes all elements of an Azure VM (compute, OS disk, data disks and NICs)
 
 
@@ -111,18 +111,18 @@ The name of the file share to use.  If this share name does not exist it will be
 
 
 ### **AppAttachSessionHostManagedIdAADGroupName**
-The name of an **Azure AD group** containing the [system-managed identities](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-managed-identities-work-vm) of the WVD session hosts that will be using the share.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.<br><br>
+The name of an **Azure AD group** containing the [system-managed identities](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-managed-identities-work-vm) of the AVD session hosts that will be using the share.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.<br><br>
 IMPORTANT:  These identities are **not the same thing** as device objects that are synced from onprem AD (if device sync is enabled)
 
 
 ### **AppAttachUsersADDSGroupName**
-The name of an <b>onprem AD group</b> containing the managed identities of the WVD session hosts that will be using the share.  This group must be synchronized to Azure AD.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
+The name of an <b>onprem AD group</b> containing the managed identities of the AVD session hosts that will be using the share.  This group must be synchronized to Azure AD.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
 
 ### **AppAttachComputersADDSGroupName**
-The name of an <b>onprem AD group</b> containing the computer objects of the WVD session hosts that will be using the share.  This group must be synchronized to Azure AD.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
+The name of an <b>onprem AD group</b> containing the computer objects of the AVD session hosts that will be using the share.  This group must be synchronized to Azure AD.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
 
 ### **IsGovCloud**
-<b>This parameter is optional.  If not specified the default is to use the Azure commercial cloud</b><br>
+<b>This parameter is optional. If not specified, the default is to use the Azure commercial cloud.</b><br>
 
 If you are working with a US Gov Cloud Azure environment, add this parameter to the command line.  This is necessary because the Azure Files endpoint name suffixes are different for Giv cloud vs the commercial (public) cloud.
 </ul>
@@ -138,7 +138,7 @@ This script deletes all of the (major) components of a VM:
 * All data disks
 * All NICs
 
-It works by retrieving the VM object from Azure and then looking at the OSProfile, storageProfile and the networkProfile properties to find the disks and NICs associated with the VM and then deleting them.
+It works by retrieving the VM object from Azure and then looking at the OSProfile, storageProfile, and the networkProfile properties to find the disks and NICs associated with the VM and then deleting them.
 
 This is intended to make cleanup easier when messing around with machines for sandboxing etc.  
 
