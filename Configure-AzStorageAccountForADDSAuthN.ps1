@@ -1,5 +1,5 @@
 # Configure-AzStorageAccountForADDSAuthN.ps1
-# by Ken Hoover <ken dot hoover at micriosoft dotcom>
+# by Ken Hoover <ken dot hoover at Microsoft dotcom>
 
 # This script configures an Azure storage account for authentication using ADDS Authentication
 # 
