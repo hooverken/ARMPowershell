@@ -1,3 +1,6 @@
+#Requires -Modules "Az", "AzureADPreview"
+#Requires -PSEdition Core
+
 # Configure-AzFilesShareForMSIXAppAttach.ps1
 # by Ken Hoover <ken dot hoover at Microsoft dotcom>
 
@@ -21,6 +24,7 @@
 #
 # 15 April 2021 - Initial version derived from Configure-AzFilesForADDSandFSLogix.ps1
 # 19 May 2021   - Added check that shared-key access is enabled (if it's disabled it breaks the NFTS permissions code)
+# 15 June 2021  - Added Requires directives
 
 ############################################################################
 # Required parameters - make sure you have all of this info ahead of time
@@ -30,9 +34,9 @@
 param(
     [Parameter(mandatory = $true)][string]$storageAccountName,  # The name of the storage account with the share
     [Parameter(mandatory = $true)][string]$shareName,           # The name of the share.  The share will be created if it does not exist.
-    [Parameter(mandatory = $true)][string]$AppAttachSessionHostManagedIdAADGroupName,  # The name of an AD group containing the computer objects of the machines that need to use attached apps.  This group must be synchronized to AzureAD
+    [Parameter(mandatory = $true)][string]$AppAttachSessionHostManagedIdAADGroupName,  # The name of an AZURE AD group containing the managed identities of the VM's that will be using app attach
     [Parameter(mandatory = $true)][string]$AppAttachUsersADDSGroupName, # The name of an AD group containing users that can access attached apps
-    [Parameter(mandatory = $true)][string]$AppAttachComputersADDSGroupName, # The name of an AZURE AD group containing the managed identities of the VM's that will be using app attach
+    [Parameter(mandatory = $true)][string]$AppAttachComputersADDSGroupName, # The name of an AD group containing the computer objects of the machines that need to use attached apps.  This group must be synchronized to AzureAD
     [Parameter(mandatory = $false)][switch]$IsGovCloud         # MUST add this parameter if you're working in Azure Gov Cloud, otherwise don't use it
 )
 
