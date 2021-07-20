@@ -21,6 +21,8 @@
 #
 # 15 April 2021 - Initial version derived from Configure-AzFilesForADDSandFSLogix.ps1
 # 19 May 2021   - Added check that shared-key access is enabled (if it's disabled it breaks the NFTS permissions code)
+# 14 Jul 2021   - Set default share permission for storage account to read-only instead of using IAM role assignments
+#                 (ref: https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-ad-ds-assign-permissions)
 
 ############################################################################
 # Required parameters - make sure you have all of this info ahead of time
@@ -30,7 +32,7 @@
 param(
     [Parameter(mandatory = $true)][string]$storageAccountName,  # The name of the storage account with the share
     [Parameter(mandatory = $true)][string]$shareName,           # The name of the share.  The share will be created if it does not exist.
-    [Parameter(mandatory = $true)][string]$AppAttachSessionHostManagedIdAADGroupName,  # The name of an AD group containing the computer objects of the machines that need to use attached apps.  This group must be synchronized to AzureAD
+#    [Parameter(mandatory = $true)][string]$AppAttachSessionHostManagedIdAADGroupName,  # The name of an AD group containing the computer objects of the machines that need to use attached apps.  This group must be synchronized to AzureAD
     [Parameter(mandatory = $true)][string]$AppAttachUsersADDSGroupName, # The name of an AD group containing users that can access attached apps
     [Parameter(mandatory = $true)][string]$AppAttachComputersADDSGroupName, # The name of an AZURE AD group containing the managed identities of the VM's that will be using app attach
     [Parameter(mandatory = $false)][switch]$IsGovCloud         # MUST add this parameter if you're working in Azure Gov Cloud, otherwise don't use it
@@ -83,6 +85,33 @@ if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD
 }
 
 
+# Check that the specified file share exists.  If it doesn't then create it.
+
+Write-verbose ("Setting storage context...")
+$storageContext = New-AzStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageAccountKey
+Write-Verbose ("Checking if share $sharename exists in storage account $storageAccountName...")
+if ($null -eq (get-AzStorageShare -Name $sharename -Context $storageContext -ErrorAction SilentlyContinue)) {
+    write-verbose ("File share $sharename does not exist.  Creating new share $sharename...")
+    New-AzStorageShare -Name $sharename -Context $storageContext
+} else {
+    write-verbose ("Share $sharename is present (OK)")
+}
+###############################################################################################
+# Set default file share permission for this storage account to StorageFileDataSmbShareReader
+#
+# This avoids having to do individual IAM role assignments which makes this a lot simpler than it used to be
+
+$defaultPermission = "StorageFileDataSmbShareReader" # Default permission (IAM Role) for the share
+$storageAccount = Set-AzStorageAccount -ResourceGroupName $storageAccount.ResourceGroupName `
+                                       -AccountName $storageAccount.StorageAccountName `
+                                       -DefaultSharePermission $defaultPermission
+
+# Verify that the change stuck
+if (!($storageAccount.AzureFilesIdentityBasedAuth -eq $defaultPermission)) { 
+    Write-Error ("Change to default permissions for storage account failed!")
+    exit
+}
+
 #####################################################
 # Set IAM Roles for the share
 
@@ -96,46 +125,47 @@ if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD
 
 ## Set the IAM Roles on the file share
 
-Write-verbose ("Setting storage context...")
-$storageAccountKey = (get-AzStorageAccountKey -ResourceGroupName $storageAccountRGName -Name $storageAccountName)[0].Value
-$storageContext = New-AzStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageAccountKey
+# Write-verbose ("Setting storage context...")
+# $storageContext = New-AzStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageAccountKey
 
-# Verify that the target share exists.  If not, create it.
-Write-Verbose ("Checking if share $sharename exists in storage account $storageAccountName...")
-if ($null -eq (get-AzStorageShare -Name $sharename -Context $storageContext -ErrorAction SilentlyContinue)) {
-    write-verbose ("File share $sharename does not exist.  Creating new share $sharename...")
-    New-AzStorageShare -Name $sharename -Context $storageContext
-} else {
-    write-verbose ("Share $sharename is present (OK)")
-}
+# # Verify that the target share exists.  If not, create it.
+# Write-Verbose ("Checking if share $sharename exists in storage account $storageAccountName...")
+# if ($null -eq (get-AzStorageShare -Name $sharename -Context $storageContext -ErrorAction SilentlyContinue)) {
+#     write-verbose ("File share $sharename does not exist.  Creating new share $sharename...")
+#     New-AzStorageShare -Name $sharename -Context $storageContext
+# } else {
+#     write-verbose ("Share $sharename is present (OK)")
+# }
 
 
-# Retrieve the object ID's for the AzureAD groups that need IAM roles assigned
-Write-Verbose ("Retrieving AzureAD group information...")
-$MSIXHostManagedIdentitiesGroup = Get-AzAdGroup -DisplayName $AppAttachSessionHostManagedIdAADGroupName -ErrorAction SilentlyContinue
-$MSIXAppAttachAADUsersGroup     = Get-AzAdGroup -DisplayName $AppAttachUsersADDSGroupName -ErrorAction SilentlyContinue
-$MSIXAppAttachADDSComputerGroup = Get-AzAdGroup -DisplayName $AppAttachComputersADDSGroupName -ErrorAction SilentlyContinue
+# # Retrieve the object ID's for the AzureAD groups that need IAM roles assigned
+# Write-Verbose ("Retrieving AzureAD group information...")
+# $MSIXHostManagedIdentitiesGroup = Get-AzAdGroup -DisplayName $AppAttachSessionHostManagedIdAADGroupName -ErrorAction SilentlyContinue
+# $MSIXAppAttachAADUsersGroup     = Get-AzAdGroup -DisplayName $AppAttachUsersADDSGroupName -ErrorAction SilentlyContinue
+# $MSIXAppAttachADDSComputerGroup = Get-AzAdGroup -DisplayName $AppAttachComputersADDSGroupName -ErrorAction SilentlyContinue
 
-if(-not ($MSIXHostManagedIdentitiesGroup -and $MSIXAppAttachAADUsersGroup -and $MSIXAppAttachADDSComputerGroup)) {
-    write-warning ("Could not find group name $AppAttachComputersADDSGroupName, $AppAttachSessionHostManagedIdAADGroupName or $AppAttachUsersADDSGroupName.  Please verify names and try again.")
-    exit
-}
+# if(-not ($MSIXHostManagedIdentitiesGroup -and $MSIXAppAttachAADUsersGroup -and $MSIXAppAttachADDSComputerGroup)) {
+#     write-warning ("Could not find group name $AppAttachComputersADDSGroupName, $AppAttachSessionHostManagedIdAADGroupName or $AppAttachUsersADDSGroupName.  Please verify names and try again.")
+#     exit
+# }
 
-# Set the scope for the role assignment (just the share)
-$scope = (Get-AzStorageAccount -Name $storageAccountName -ResourceGroupName $storageAccountRGName).Id + "/fileservices/default/fileshares/" + $shareName
+# # Set the scope for the role assignment (just the share)
+# $scope = (Get-AzStorageAccount -Name $storageAccountName -ResourceGroupName $storageAccountRGName).Id + "/fileservices/default/fileshares/" + $shareName
 
-# Grant the "Storage File Data SMB Share reader" roles to the three groups
-write-verbose ("Assigning role Storage File Data SMB Share Reader to group `"" + $MSIXHostManagedIdentitiesGroup.DisplayName + "`"...")
-$result = New-AzRoleAssignment -RoleDefinitionName "Storage File Data SMB Share Reader" -Scope $scope -ObjectId $MSIXHostManagedIdentitiesGroup.Id
+# # Grant the "Storage File Data SMB Share reader" roles to the three groups
+# write-verbose ("Assigning role Storage File Data SMB Share Reader to group `"" + $MSIXHostManagedIdentitiesGroup.DisplayName + "`"...")
+# $result = New-AzRoleAssignment -RoleDefinitionName "Storage File Data SMB Share Reader" -Scope $scope -ObjectId $MSIXHostManagedIdentitiesGroup.Id
 
-write-verbose ("Assigning role Storage File Data SMB Share Reader to group `"" + $MSIXAppAttachADDSComputerGroup.DisplayName + "`"...")
-$result = New-AzRoleAssignment -RoleDefinitionName "Storage File Data SMB Share Reader" -Scope $scope -ObjectId $MSIXAppAttachADDSComputerGroup.Id
+# write-verbose ("Assigning role Storage File Data SMB Share Reader to group `"" + $MSIXAppAttachADDSComputerGroup.DisplayName + "`"...")
+# $result = New-AzRoleAssignment -RoleDefinitionName "Storage File Data SMB Share Reader" -Scope $scope -ObjectId $MSIXAppAttachADDSComputerGroup.Id
 
-write-verbose ("Assigning role Storage File Data SMB Share Reader to group `"" + $MSIXAppAttachAADUsersGroup.DisplayName + "`"...")
-$result = New-AzRoleAssignment -RoleDefinitionName "Storage File Data SMB Share Reader" -Scope $scope -ObjectId $MSIXAppAttachAADUsersGroup.Id
+# write-verbose ("Assigning role Storage File Data SMB Share Reader to group `"" + $MSIXAppAttachAADUsersGroup.DisplayName + "`"...")
+# $result = New-AzRoleAssignment -RoleDefinitionName "Storage File Data SMB Share Reader" -Scope $scope -ObjectId $MSIXAppAttachAADUsersGroup.Id
 
 
 # Update NTFS permissions so the AD objects can access the share
+
+$storageAccountKey = (get-AzStorageAccountKey -ResourceGroupName $storageAccountRGName -Name $storageAccountName)[0].Value
 
 $ShareName  = $shareName
 $drive      = "Y:"
