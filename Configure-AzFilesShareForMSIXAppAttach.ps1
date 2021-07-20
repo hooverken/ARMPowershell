@@ -84,6 +84,13 @@ if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD
     exit 
 }
 
+# Get the storage account key (we'll use this later)
+Write-Verbose ("Getting storage account key for $storageAccountName...")
+$storageAccountKey = (get-AzStorageAccountKey -ResourceGroupName $storageAccount.ResourceGroupName -Name $storageAccount.StorageAccountName)[0].Value
+if ($null -eq $storageAccountKey) { 
+    write-warning ("Unable to retrieve storage account key for $storageAccountName")
+    exit 
+}
 
 # Check that the specified file share exists.  If it doesn't then create it.
 
@@ -102,15 +109,19 @@ if ($null -eq (get-AzStorageShare -Name $sharename -Context $storageContext -Err
 # This avoids having to do individual IAM role assignments which makes this a lot simpler than it used to be
 
 $defaultPermission = "StorageFileDataSmbShareReader" # Default permission (IAM Role) for the share
+write-verbose ("Setting default File share permissions for "+ $storageaccount.storageAccountName + "... ")
 $storageAccount = Set-AzStorageAccount -ResourceGroupName $storageAccount.ResourceGroupName `
                                        -AccountName $storageAccount.StorageAccountName `
                                        -DefaultSharePermission $defaultPermission
 
 # Verify that the change stuck
-if (!($storageAccount.AzureFilesIdentityBasedAuth -eq $defaultPermission)) { 
+if (!($storageAccount.AzureFilesIdentityBasedAuth.DefaultSharePermission -eq $defaultPermission)) { 
     Write-Error ("Change to default permissions for storage account failed!")
     exit
+} else { 
+    Write-verbose ("Confirmed that default permissions are set correctly for " + $storageaccount.storageAccountName)
 }
+
 
 #####################################################
 # Set IAM Roles for the share
@@ -164,8 +175,8 @@ if (!($storageAccount.AzureFilesIdentityBasedAuth -eq $defaultPermission)) {
 
 
 # Update NTFS permissions so the AD objects can access the share
+Write-Verbose ("Setting NTFS permissions for share $shareName...")
 
-$storageAccountKey = (get-AzStorageAccountKey -ResourceGroupName $storageAccountRGName -Name $storageAccountName)[0].Value
 
 $ShareName  = $shareName
 $drive      = "Y:"
