@@ -31,7 +31,7 @@ It's best to run this script from an AD domain controller.
 * Make sure you are connected to the target Azure environment using the Az Powershell module
 * Must be connected to Azure as a user that has the ability to configure the storage account (e.g. `Owner`)
 * The ActiveDirectory Powershell module must be installed
-* Your Powershell session is running in an elevated (Administrator) context
+* Your Powershell session must be running in an elevated (Administrator) context
 * You must have have permission to create computer objects in the target OU
 
 
@@ -107,7 +107,7 @@ The name of the storage account for the file share
 
 ### **shareName**
 
-The name of the file share to use.  If this share name does not exist it will be created for you.  If the filename contains mixed case characters it will be converted to all-lowercase as required by Azure Files.  <br><br>For the full list of Azure Files share name constraints see [this link](https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-shares--directories--files--and-metadata#share-names)
+The name of the file share to use.  If this share name does not exist it will be created for you.  If the share name contains mixed case characters it will be converted to all-lowercase as required by Azure Files.  <br><br>For the full list of Azure Files share name constraints see [this link](https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-shares--directories--files--and-metadata#share-names)
 
 
 ### **AppAttachSessionHostManagedIdAADGroupName**
