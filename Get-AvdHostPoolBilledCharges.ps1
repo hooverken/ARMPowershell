@@ -19,6 +19,7 @@ param(
 
 # If we didn't get a start and/or end time, default to the last 30 days
 if (($null -eq $StartDate) -or ($null -eq $EndDate)) {
+    Write-Verbose "Either the start or end date parameters are missing, defaulting to last 30 days for output."
     $StartDate = (Get-Date).AddDays(-30)
     $EndDate = (Get-Date)
 }
@@ -105,39 +106,28 @@ Write-Verbose "Retrieving resource information..."
 # Retrieving Consumption Data...
 $allConsumption = Get-AzConsumptionUsageDetail -ResourceGroup $hostPoolRGName
 
-# Write-Verbose "Retrieving billing data for compute resources..."
-# $allConsumption = $ComputeResourceIds | % { 
-#     Get-AzConsumptionUsageDetail -InstanceId $_ -StartDate $StartDate -EndDate $EndDate -IncludeMeterDetails
-# }
-
-# Write-Verbose "Retrieving billing data for OS disk resources..."
-# $allConsumption += $OSDiskResourceIds | % { 
-#     Get-AzConsumptionUsageDetail -InstanceId $_ -StartDate $StartDate -EndDate $EndDate -IncludeMeterDetails
-# }
-# Write-Verbose "Retrieving billing data for Data disk resources..."
-# $allConsumption += $DataDiskResourceIds | % { 
-#     Get-AzConsumptionUsageDetail -InstanceId $_ -StartDate $StartDate -EndDate $EndDate -IncludeMeterDetails  
-# }
-
 $costData = @()
 
+# Create a list of custom objects holding the key info we want to output
 $allConsumption | % {
     $targetResourceId = $_.InstanceId
     $o = New-Object -TypeName PSObject
     $o | Add-Member -MemberType NoteProperty -Name "ResourceName" -Value ($allResources | where {$_.id -eq $targetResourceId}).name
+    $o | Add-Member -MemberType NoteProperty -Name "PreTaxCost" -Value ([math]::Round($_.PretaxCost,2))
     $o | Add-Member -MemberType NoteProperty -Name "ResourceType" -Value ($allResources | where {$_.id -eq $targetResourceId}).type
     $o | Add-Member -MemberType NoteProperty -Name "ResourceId" -Value $targetResourceId
-    $o | Add-Member -MemberType NoteProperty -Name "PreTaxCost" -Value ([math]::Round($_.PretaxCost,2))
     $costData += $o
     $totalcost += [math]::Round($_.PreTaxCost,2)
 }
+
+# Some final preparations for output
 
 $totalCostStr = ($totalcost).ToString() + " (" + $allConsumption[0].Currency + ")"
 
 $computeCost = 0.0
 $storageCost = 0.0
 
-$costData | format-table PreTaxCost,resourceType,ResourceName
+# $costData | format-table PreTaxCost,resourceType,ResourceName
 
 $costData | where {$_.ResourceType -eq "Microsoft.Compute/virtualMachines"} | % {
     $computeCost += [math]::Round($_.PreTaxCost,2)
@@ -147,11 +137,14 @@ $costData | where {$_.ResourceType -eq "Microsoft.Compute/disks"} | % {
     $storageCost += [math]::Round($_.PreTaxCost,2)
 }
 
-Write-Output "======================================================================================="
-Write-Output "Total billed cost for compute and disk in host pool $AVDhostpoolName is $totalCostStr"
-Write-Output ("Total compute cost is " + $computeCost.ToString() +  " (" + $allConsumption[0].Currency + ")")
-Write-Output ("Total disk (storage) cost is " + $storageCost.toString() + " (" + $allConsumption[0].Currency + ")")
-Write-Output "======================================================================================="
+# Dump the list of objects we made in case someone wants to use it as input for something downstream
+$costData
+
+Write-Verbose "======================================================================================="
+Write-Verbose "Total billed cost for compute and disk in host pool $AVDhostpoolName is $totalCostStr"
+Write-Verbose ("Total compute cost is " + $computeCost.ToString() +  " (" + $allConsumption[0].Currency + ")")
+Write-Verbose ("Total disk (storage) cost is " + $storageCost.toString() + " (" + $allConsumption[0].Currency + ")")
+Write-Verbose "======================================================================================="
 Write-warning ("Due to rounding, some resources may show zero cost when the actual value is nonzero")
 
 
