@@ -131,7 +131,7 @@ If you are working with a US Gov Cloud Azure environment, add this parameter to 
 ![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/Configure-AzFilesShareForMSIXAppAttach.PNG)
 ---
 
-# Get-AvdHotPoolBilledCharges.ps1
+# Get-AvdHostPoolBilledCharges.ps1
 
 This script takes the name of an [Azure Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/) host pool as a parameter and returns the actual billed charges for the compute and disk resources for a given time span (default prior 30 days if no start/end date specified).
 
