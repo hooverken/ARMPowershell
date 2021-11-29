@@ -114,8 +114,10 @@ $allConsumption | % {
     $o = New-Object -TypeName PSObject
     $o | Add-Member -MemberType NoteProperty -Name "ResourceName" -Value ($allResources | where {$_.id -eq $targetResourceId}).name
     $o | Add-Member -MemberType NoteProperty -Name "PreTaxCost" -Value ([math]::Round($_.PretaxCost,2))
-    $o | Add-Member -MemberType NoteProperty -Name "ResourceType" -Value ($allResources | where {$_.id -eq $targetResourceId}).type
-    $o | Add-Member -MemberType NoteProperty -Name "ResourceId" -Value $targetResourceId
+    $o | Add-Member -MemberType NoteProperty -Name "ResourceType" -Value $_.Type # ($allResources | where {$_.id -eq $targetResourceId}).type
+    $o | Add-Member -MemberType NoteProperty -Name "UsageStart" -Value $_.UsageStart # ($allResources | where {$_.id -eq $targetResourceId}).UsageStart
+    $o | Add-Member -MemberType NoteProperty -Name "UsageEnd" -Value $_.UsageEnd # ($allResources | where {$_.id -eq $targetResourceId}).UsageEnd
+    $o | Add-Member -MemberType NoteProperty -Name "ResourceId" -Value $_.InstanceId # $targetResourceId
     $costData += $o
     $totalcost += [math]::Round($_.PreTaxCost,2)
 }

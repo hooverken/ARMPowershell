@@ -140,8 +140,10 @@ Due to the way that the billing API returns data, there will likely be multiple 
 The output is a list of objects with the following properties:
 
 * **resourceName** (string) The name of the resource
-* **pretaxCost** (double) The billed charge for the resource
+* **pretaxCost** (decimal) The billed charge for the resource
 * **resourceType** (string) The type of the billed item.  This will be `Microsoft.Compute/virtualMachines` for Compute and `Microsoft.Compute/disks` for managed disks.
+* **UsageStart** (dateTime) The start of the billing period for the line item
+* **UsageEnd** (dateTime) The end of the billing period for the line item
 * **resourceId** (string) The full resource ID of the billed resource
 
 ## Prerequisites
