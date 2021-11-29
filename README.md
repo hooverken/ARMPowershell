@@ -6,6 +6,7 @@ Miscellaneous Powershell scripts for use with Azure ARM
 * **Configure-AzStorageAccountForADDSAuthN.ps1** - Configures an Azure storage account to use [Active Directory (ADDS) authentication](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-active-directory-enable).  This is intended as an alternative to the AzFilesHybrid module wihich is referenced in the above link.<br><br>
 * **Configure-AzFilesShareForFSLogixProfileContainers.ps1** - Applies the necessary IAM role assignments and NTFS permissions structure for an [Azure Files](https://azure.microsoft.com/en-us/services/storage/files/) share to work correctly with [FSlogix profile containers](https://docs.microsoft.com/en-us/azure/virtual-desktop/fslogix-containers-azure-files).<br><br>
 * **Configure-AzFilesShareForMSIXAppAttach.ps1** - Configures an Azure Files share permissions for use with [MSIX App Attach](https://docs.microsoft.com/en-us/azure/virtual-desktop/what-is-app-attach) and [Azure Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/)<br><br>
+* **Get-AvdHostPoolBilledCharges.ps1** - Takes the name of an [Azure Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/) host pool as a parameter and returns the actual billed charges for the compute and disk resources for a given time span (default prior 30 days if no start/end date specified).<br><br>
 * **Exterminate-AzureVM.ps1** - Deletes all elements of an Azure VM (compute, OS disk, data disks and NICs)
 
 
@@ -130,6 +131,38 @@ If you are working with a US Gov Cloud Azure environment, add this parameter to 
 ![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/Configure-AzFilesShareForMSIXAppAttach.PNG)
 ---
 
+# Get-AvdHotPoolBilledCharges.ps1
+
+This script takes the name of an [Azure Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/) host pool as a parameter and returns the actual billed charges for the compute and disk resources for a given time span (default prior 30 days if no start/end date specified).
+
+Due to the way that the billing API returns data, there will likely be multiple lines per resource, each with its own time period, since utilization for a resource may not cover an entire day.
+
+The output is a list of objects with the following properties:
+
+* **resourceName** (string) The name of the resource
+* **pretaxCost** (double) The billed charge for the resource
+* **resourceType** (string) The type of the billed item.  This will be `Microsoft.Compute/virtualMachines` for Compute and `Microsoft.Compute/disks` for managed disks.
+* **resourceId** (string) The full resource ID of the billed resource
+
+## Prerequisites
+
+* Make sure that the current session context is pointing to the correct Azure subscription
+
+
+## Parameters
+
+### **AVDHostPoolName**
+The name of the AVD Host Pool to examine
+
+### **startDate** and **endDate**
+
+dateTime values defining the date range to return data from.  If either the start or end date is not provided,  then the default is to use data from the prior 30 days.
+
+*IMPORTANT: Billing data can lag by a few days so cost information for charges incurred less than 48 hours ago may not be accurate (or even present).*<br><br>
+
+Sample Output (may not exactly match)
+![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/Get-AvdHostPoolBilledCharges-Output-Screeenshot.png)
+
 # Exterminate-AzureVM.ps1
 
 This script deletes all of the (major) components of a VM:
@@ -142,4 +175,13 @@ It works by retrieving the VM object from Azure and then looking at the OSProfil
 
 This is intended to make cleanup easier when messing around with machines for sandboxing etc.  
 
+Backups of the target VM in a Recovery Vault or similar service, are not affected and will need to be removed manually.
+
 **The deletes are NOT UNDOABLE so use with care.**
+
+## Parameters
+
+### **VirtualMachineName**
+
+The name of the VM to exterminate
+
