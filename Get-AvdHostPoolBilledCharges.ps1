@@ -26,6 +26,7 @@ if (($null -eq $StartDate) -or ($null -eq $EndDate)) {
 
 if ($EndDate -lt $StartDate) {
     Write-Error "ETIMETRAVELFORBIDDEN:  End date must be later than start date"
+    exit
 }
 
 Write-Verbose "Getting billed charges for AVD host pool $AVDHostPoolName between $StartDate and $EndDate"
