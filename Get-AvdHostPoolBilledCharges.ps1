@@ -83,20 +83,20 @@ $SessionHostVms | % {
     $OSDiskResourceIds += $_.StorageProfile.OsDisk.ManagedDisk.Id
     $allResources += Get-AzResource -ResourceId $_.StorageProfile.OsDisk.ManagedDisk.Id
     
-    if ($_.StorageProfile.DataDisks.count -gt 1) {
-        $_.StorageProfile.DataDisks | % {
+    if ($null -ne $_.StorageProfile.DataDisks) {  # If the VM has at least one data disk
+        if ($_.StorageProfile.DataDisks.count -gt 1) {  # if > 1 data disk, loop thru them
+            $_.StorageProfile.DataDisks | % {
+                $disk = Get-AzDisk -ResourceGroupName $VmResourceGroupName -DiskName $_.StorageProfile.DataDisks.name
+                $datadiskResourceIds += $disk.Id
+                $allResources += Get-AzResource -ResourceId $disk.Id
+            }
+        } else { # only one data disk, so just add it
             $disk = Get-AzDisk -ResourceGroupName $VmResourceGroupName -DiskName $_.StorageProfile.DataDisks.name
             $datadiskResourceIds += $disk.Id
             $allResources += Get-AzResource -ResourceId $disk.Id
         }
-    } else {
-        $disk = Get-AzDisk -ResourceGroupName $VmResourceGroupName -DiskName $_.StorageProfile.DataDisks.name
-        $datadiskResourceIds += $disk.Id
-        $allResources += Get-AzResource -ResourceId $disk.Id
     }
 }
-
-$allResourceIds = ($allResources).id
 
 Write-Verbose ("Retrieved " + $ComputeResourceIds.count + " Compute resource(s)")
 Write-Verbose ("Retrieved " + $OSDiskResourceIds.count + " OS disk resource(s)")
@@ -114,11 +114,11 @@ $allConsumption | % {
     $targetResourceId = $_.InstanceId
     $o = New-Object -TypeName PSObject
     $o | Add-Member -MemberType NoteProperty -Name "ResourceName" -Value ($allResources | where {$_.id -eq $targetResourceId}).name
-    $o | Add-Member -MemberType NoteProperty -Name "PreTaxCost" -Value ([math]::Round($_.PretaxCost,2))
-    $o | Add-Member -MemberType NoteProperty -Name "ResourceType" -Value $_.Type # ($allResources | where {$_.id -eq $targetResourceId}).type
-    $o | Add-Member -MemberType NoteProperty -Name "UsageStart" -Value $_.UsageStart # ($allResources | where {$_.id -eq $targetResourceId}).UsageStart
-    $o | Add-Member -MemberType NoteProperty -Name "UsageEnd" -Value $_.UsageEnd # ($allResources | where {$_.id -eq $targetResourceId}).UsageEnd
-    $o | Add-Member -MemberType NoteProperty -Name "ResourceId" -Value $_.InstanceId # $targetResourceId
+    $o | Add-Member -MemberType NoteProperty -Name "PreTaxCost" -Value ([math]::Round($_.PretaxCost,2))  # Round cost to two decimal places
+    $o | Add-Member -MemberType NoteProperty -Name "ResourceType" -Value ($allResources | where {$_.id -eq $targetResourceId}).Type
+    $o | Add-Member -MemberType NoteProperty -Name "UsageStart" -Value $_.UsageStart
+    $o | Add-Member -MemberType NoteProperty -Name "UsageEnd" -Value $_.UsageEnd
+    $o | Add-Member -MemberType NoteProperty -Name "ResourceId" -Value $_.InstanceId
     $costData += $o
     $totalcost += [math]::Round($_.PreTaxCost,2)
 }
@@ -129,8 +129,6 @@ $totalCostStr = ($totalcost).ToString() + " (" + $allConsumption[0].Currency + "
 
 $computeCost = 0.0
 $storageCost = 0.0
-
-# $costData | format-table PreTaxCost,resourceType,ResourceName
 
 $costData | where {$_.ResourceType -eq "Microsoft.Compute/virtualMachines"} | % {
     $computeCost += [math]::Round($_.PreTaxCost,2)
@@ -148,7 +146,7 @@ Write-Verbose "Total billed cost for compute and disk in host pool $AVDhostpoolN
 Write-Verbose ("Total compute cost is " + $computeCost.ToString() +  " (" + $allConsumption[0].Currency + ")")
 Write-Verbose ("Total disk (storage) cost is " + $storageCost.toString() + " (" + $allConsumption[0].Currency + ")")
 Write-Verbose "======================================================================================="
-Write-warning ("Due to rounding, some resources may show zero cost when the actual value is nonzero")
+Write-Warning ("Due to rounding, some resources may show zero cost when the actual value is nonzero")
 
 
 
