@@ -98,11 +98,11 @@ $SessionHostVms | % {
     }
 }
 
-Write-Verbose ("Retrieved " + $ComputeResourceIds.count + " Compute resource(s)")
+Write-Verbose ("Retrieved " + $ComputeResourceIds.count + " compute resource(s)")
 Write-Verbose ("Retrieved " + $OSDiskResourceIds.count + " OS disk resource(s)")
 Write-Verbose ("Retrieved " + $DataDiskResourceIds.count + " data disk resource(s)")
 
-Write-Verbose "Retrieving resource information..."
+Write-Verbose "Retrieving consumption information for resource group $hostPoolRGName..."
 
 # Retrieving Consumption Data...
 $allConsumption = Get-AzConsumptionUsageDetail -ResourceGroup $hostPoolRGName
@@ -138,7 +138,7 @@ $costData | where {$_.ResourceType -eq "Microsoft.Compute/disks"} | % {
     $storageCost += [math]::Round($_.PreTaxCost,2)
 }
 
-# Dump the list of objects we made in case someone wants to use it as input for something downstream
+# Output the list of objects we made in case someone wants to use it as input for something downstream
 $costData
 
 Write-Verbose "======================================================================================="
@@ -147,8 +147,3 @@ Write-Verbose ("Total compute cost is " + $computeCost.ToString() +  " (" + $all
 Write-Verbose ("Total disk (storage) cost is " + $storageCost.toString() + " (" + $allConsumption[0].Currency + ")")
 Write-Verbose "======================================================================================="
 Write-Warning ("Due to rounding, some resources may show zero cost when the actual value is nonzero")
-
-
-
-
-
