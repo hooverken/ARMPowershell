@@ -46,7 +46,7 @@ if ($null -eq $currentContext) {
 }
 
 # Storage account name needs to be <= 15 characters to avoid risk of hitting legacy NetBIOS limits in AD
-if ($storageAccountName.Length -ge 15) {
+if ($storageAccountName.Length -gt 15) {
     write-warning ("Storage account name (" + $storageAccountName.Length + ") is over 15 characters.  Please use a shorter name to avoid issues.")
     exit
 }
