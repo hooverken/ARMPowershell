@@ -1,6 +1,6 @@
-# Configure-AzFilesPermissionsForFSLogix.ps1
+# Configure-AzFilesPermissionsForFSLogixProfileContainers.ps1
 # by Ken Hoover <ken dot hoover at microsoft dotcom>
-# April 2021
+# Original version April 2021
 
 # This script does the IAM role assignments and NTFS permission configuration on an Azure Files share to prepare 
 # it for use with FSLogix.
@@ -17,6 +17,8 @@
 # CHANGELOG
 # 19 May 2021 : Detect if shared-key access is disabled and warn/exit if this is the case.  This breaks the NTFS
 #               permissions work that is necessary.
+# 10 Jun 2022 : Fix permissions for users in the created share to align with FSLogix recommendations.
+
 
 [CmdletBinding()]
 param(
@@ -203,14 +205,14 @@ $acl = Get-Acl $path
 ##############################################################
 # Modify existing entry for "Users"
 
-write-verbose ("Setting Users (modify)...")
+write-verbose ("Setting Users (modify, this folder only)...")
 $acl = Get-Acl $path
-$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList "Users", "Modify,Synchronize", "ContainerInherit,ObjectInherit", "None", "Allow"
+$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList "Users", "Modify,Synchronize", "None", "None", "Allow"
 $acl.SetAccessRule($rule)
 $result = $acl | Set-Acl -Path $path
 
 # CREATOR OWNER / Subfolders and Files Only / Modify
-write-verbose ("Setting CREATOR OWNER (modify)...")
+write-verbose ("Setting CREATOR OWNER (modify, subfolders and files only)...")
 $acl = Get-Acl $path
 $rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList "CREATOR OWNER", "Modify,Synchronize", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
 $acl.SetAccessRule($rule)
