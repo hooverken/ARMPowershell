@@ -36,7 +36,62 @@ param(
     [Parameter(mandatory = $false)][switch]$IsGovCloud              # MUST add this parameter if you're working in Azure Gov Cloud, otherwise don't use it
 )
 
-# Some sanity checks before we get started
+
+# Check as many of the prerequisites as we can before we do anything.
+
+# Check if we're running in an elevated context.  If not then exit.
+$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+$principal = New-Object Security.Principal.WindowsPrincipal $identity
+if (-not $principal.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)) {
+    Write-Warning "This script must be run as an administrator.  Exiting."
+}
+
+# Verify that the required Powershell modules are installed.  If not, install them.
+
+Write-Verbose ("Verifying that required Powershell modules are present.")
+# The Az module
+if (-not (Get-Module -Name Az -ListAvailable)) {
+    Write-Host "The Az module is not installed.  Installing it now."
+    Install-Module -Name Az -Scope CurrentUser -Force
+} else {
+    Write-verbose "The Az module is present."
+}
+
+# The AzureAD Module
+# This is handled a bit differently - we open a connection 
+if (-not (Get-Module -Name AzureAD -ListAvailable)) {
+    Write-Host "The AzureAD module is not installed.  Installing it now."
+    Install-Module -Name AzureAD -Scope CurrentUser -Force
+} else {
+    write-verbose ("AzureAD module is present.")
+}
+
+# The ActiveDirectory Module
+if (-not (Get-Module -Name ActiveDirectory -ListAvailable)) {
+    Write-Host "The ActiveDirectory module is not installed.  Installing with DISM.  This may take a few minutes."
+    $result = DISM.exe /Online /Get-Capabilities | select-string "Rsat.Active"
+
+    # The ActiveDirectory RSAT package has a dependency on the ServerManager package so we might need to install 
+    # ServerManager first.
+    
+    $ServerManagerCapability = "Rsat.ServerManager.Tools~~~~0.0.1.0"
+    $ActiveDirectoryRSatModuleCapability = "Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0"
+
+    if (-not (($result.contains($ServerManagerCapability)) -and ($result.contains($ActiveDirectoryRSatModuleCapability)))) {
+        Write-warning("The ActiveDirectory Powershell module is not present.")
+        $result = DISM.exe /Online /Get-CapabilityInfo /CapabilityName:$ServerManagerCapability
+        if ($result.contains("State : Installed")) {
+            Write-Host "Installing ActiveDirectory RSAT tools with DISM."
+            DISM.exe /Online /Add-Capability /CapabilityName:$ActiveDirectoryRSatModuleCapability /NoRestart
+        } else {
+            Write-Host "Installing ServerManager and ActiveDirectory RSAT tools with DISM."
+            DISM.exe /Online /Add-Capability /CapabilityName:$ServerManagerCapability /NoRestart
+            DISM.exe /Online /Add-Capability /CapabilityName:$ActiveDirectoryRSatModuleCapability /NoRestart
+        }
+    } else {
+        write-verbose "ActiveDirectory module is present."
+    }
+}
 
 # Make sure we are connected to Azure
 $currentContext = Get-AzContext -ErrorAction SilentlyContinue
@@ -76,6 +131,14 @@ if ($null -ne $storageAccount) {
 } else {
     # we didn't find the specified storage account name in the current scope.
     Write-Warning ("Storage account $storageAccountName not found.")
+    exit
+}
+
+# Verify that we can connect to the storage account's file service on port 445.
+if (-not (Test-NetConnection -ComputerName $storageAccountName.file.core.windows.net -Port 445 -InformationLevel Quiet)) {
+    Write-Verbose ("Connectivity to $storageAccountName.file.core.windows.net on port 445/TCP confirmed.")
+} else {
+    Write-Warning ("Unable to connect to $storageAccountName.file.core.windows.net on port 445.  Please verify that the storage account exists and that the file service is enabled.")
     exit
 }
 
