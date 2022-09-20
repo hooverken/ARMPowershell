@@ -16,7 +16,7 @@
 #               permissions work that is necessary.
 # 10 Jun 2022 : Fix permissions for users in the created share to better align with FSLogix example.
 # 20 Sep 2022 : Powershell 7+ is now required
-#               Significant logic simplification and dependency on three components of the Az module
+#               Significant logic simplification to remove dependencies - now only three Az module components needed
 #               Automatic install of needed Az modules if it's not present
 #               Storage account name length validated (finally) at the parameter level
 #               Improved checking of runtime prerequisites
@@ -89,7 +89,9 @@ if ($storageAccount) {
             Write-Warning ("Unable to connect to $endpointFqdn on port 445/TCP.`n ** Please verify that the storage account exists, is accessible from this workstation and that the file service is enabled.")
             exit
         }
+    } else {
         Write-Warning "No valid file endpoint found for $storageaccountName.  Make sure that the file service is enabled on the storage account."
+        exit
     }
 } else {
     Write-Warning ("Storage account $storageAccountName not found in subscription ID " + $currentContext.Subscription + ".")
@@ -99,9 +101,9 @@ if ($storageAccount) {
 # Verify that the storage account does not have key AuthN disabled.  
 # If it's disabled it will break the ACL-setting procedure used by this script.
 # Ref: https://docs.microsoft.com/en-us/azure/storage/common/shared-key-authorization-prevent?tabs=portal
-if (-not $storageaccount.AllowSharedKeyAccess) {
-    Write-Warning "Storage account " + $storageAccount.StorageAccountName + " is configured to deny shared key access."
-    Write-Warning "Please enable shared key access to this account before running this script."
+if ($false -eq $storageaccount.AllowSharedKeyAccess) {
+    Write-Warning ("Storage account " + $storageAccount.StorageAccountName + " is configured to deny shared key access.")
+    Write-Warning ("Please enable shared key access to this account before running this script.")
     exit
 }
 

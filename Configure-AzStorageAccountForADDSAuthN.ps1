@@ -5,7 +5,8 @@
 # 
 # Based on work by John Kelbley <johnkel at Microsoft dotcom>
 
-# April 2021
+# initial release April 2021
+# last update Sept 2022
 
 ###############################################################################################################
 #  This is the "Manual" process to configure AD authentication for Azure Files
@@ -25,13 +26,20 @@
 #
 # CHANGELOG
 # 13 MAY 2021 : Check for AD enabled status before doing anything and removed storageAccountRGName variable
+# 21 Sep 2022 : Powershell 7 now required
+#               storage account length constraint enforced by parameter validation
+#               Reduced number of modules required to function (Az.Accounts, Az.Resources, Az.Storage)
+#               Auto-install of missing modules
+#               Installs RSAT tools if not present (needed for ActiveDirectory module)
+#               Simplified logic in a few places.
 
 
 #requires -runasAdministrator
+#requires -version 7.0
 
 [CmdletBinding()]
 param(
-    [Parameter(mandatory = $true)][string]$storageAccountName,      # The name of the storage account to configure
+    [Parameter(mandatory = $true)][ValidateLength(1,15)][string]$storageAccountName,     # The name of the storage account with the share
     [Parameter(mandatory = $true)][string]$ADOuDistinguishedName,   # The full DN of the OU to put the new computer object in
     [Parameter(mandatory = $false)][switch]$IsGovCloud              # MUST add this parameter if you're working in Azure Gov Cloud, otherwise don't use it
 )
@@ -39,32 +47,17 @@ param(
 
 # Check as many of the prerequisites as we can before we do anything.
 
-# Check if we're running in an elevated context.  If not then exit.
-$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-$principal = New-Object Security.Principal.WindowsPrincipal $identity
-if (-not $principal.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)) {
-    Write-Warning "This script must be run as an administrator.  Exiting."
-}
-
 # Verify that the required Powershell modules are installed.  If not, install them.
 
-Write-Verbose ("Verifying that required Powershell modules are present.")
-# The Az module
-if (-not (Get-Module -Name Az -ListAvailable)) {
-    Write-Host "The Az module is not installed.  Installing it now."
-    Install-Module -Name Az -Scope CurrentUser -Force
-} else {
-    Write-verbose "The Az module is present."
+Write-Verbose ("Verifying that the necessary Azure Powershell modules are present.")
+$requiredModules = @("Az.Accounts", "Az.Storage", "Az.Resources")
+$requiredModules | ForEach-Object {
+    if (-not (Get-Module -Name $_ -ListAvailable)) {
+        Write-Verbose ("Module $_ is not installed.  Installing it now.")
+        Install-Module -Name $_ -Force -Scope CurrentUser
+    }
 }
 
-# The AzureAD Module
-# This is handled a bit differently - we open a connection 
-if (-not (Get-Module -Name AzureAD -ListAvailable)) {
-    Write-Host "The AzureAD module is not installed.  Installing it now."
-    Install-Module -Name AzureAD -Scope CurrentUser -Force
-} else {
-    write-verbose ("AzureAD module is present.")
-}
 
 # The ActiveDirectory Module
 if (-not (Get-Module -Name ActiveDirectory -ListAvailable)) {
@@ -77,7 +70,7 @@ if (-not (Get-Module -Name ActiveDirectory -ListAvailable)) {
     $ServerManagerCapability = "Rsat.ServerManager.Tools~~~~0.0.1.0"
     $ActiveDirectoryRSatModuleCapability = "Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0"
 
-    if (-not (($result.contains($ServerManagerCapability)) -and ($result.contains($ActiveDirectoryRSatModuleCapability)))) {
+    if (-not (($result.toString().contains($ServerManagerCapability)) -and ($result.toString().contains($ActiveDirectoryRSatModuleCapability)))) {
         Write-warning("The ActiveDirectory Powershell module is not present.")
         $result = DISM.exe /Online /Get-CapabilityInfo /CapabilityName:$ServerManagerCapability
         if ($result.contains("State : Installed")) {
@@ -96,25 +89,20 @@ if (-not (Get-Module -Name ActiveDirectory -ListAvailable)) {
 # Make sure we are connected to Azure
 $currentContext = Get-AzContext -ErrorAction SilentlyContinue
 if ($null -eq $currentContext) {
-    write-warning ("You must connect to Azure with Connect-AzAccount before running this script.")
-    exit
-}
-
-# Storage account name needs to be <= 15 characters to avoid risk of hitting legacy NetBIOS limits in AD
-if ($storageAccountName.Length -gt 15) {
-    write-warning ("Storage account name (" + $storageAccountName.Length + ") is over 15 characters.  Please use a shorter name to avoid issues.")
+    write-warning ("Please connect to Azure with Connect-AzAccount before running this script.")
     exit
 }
 
 # Confirm that the storage account specified actually exists.
-# This method is inefficient and can take several seconds but doing it this way means that we don't need to ask the user for the RG name.
+# This method is inefficient and can take several seconds but doing it this way means that we don't need to ask 
+# the user for the RG name.
 # Since storage account names must be globally unique the chance of getting the "wrong" storage account from this is basically zero.
 write-verbose ("Verifying that $storageAccountName exists.  This will take a moment..." )
 $storageAccount = Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $storageAccountName}
 
 if ($null -ne $storageAccount) {
     # First make sure that this storage account is not already configured for ADDS.  If so, exit so we don't touch it.
-    Write-verbose "Checking to see if this storage account is already configured for AD authentication..."
+    Write-verbose "Checking to see if this $storageAccountName is already configured for AD authentication..."
     if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD") -and `
         ($storageaccount.AzureFilesIdentityBasedAuth.ActiveDirectoryProperties.DomainName)) {
         write-warning ("Storage account $storageAccountName is already configured to use domain " + ($storageaccount.AzureFilesIdentityBasedAuth.ActiveDirectoryProperties.DomainName + " for authentication."))
@@ -135,7 +123,7 @@ if ($null -ne $storageAccount) {
 }
 
 # Verify that we can connect to the storage account's file service on port 445.
-if (-not (Test-NetConnection -ComputerName $storageAccountName.file.core.windows.net -Port 445 -InformationLevel Quiet)) {
+if (Test-NetConnection -ComputerName "$storageAccountName.file.core.windows.net" -Port 445 -InformationLevel Quiet) {
     Write-Verbose ("Connectivity to $storageAccountName.file.core.windows.net on port 445/TCP confirmed.")
 } else {
     Write-Warning ("Unable to connect to $storageAccountName.file.core.windows.net on port 445.  Please verify that the storage account exists and that the file service is enabled.")
@@ -146,12 +134,12 @@ if (-not (Test-NetConnection -ComputerName $storageAccountName.file.core.windows
 #######################################################################
 # Create Computer Account and SPN; get AD information
 
-# AD Settings - These pull the info we need about the AD domain/forest:
-$Forest = Get-ADForest
-$Domain = get-ADdomain
+# AD Settings - These pull the info we need about the AD domain
+$currentDomain = (get-computerinfo).csdomain  # the domain that this computer is joined to
+$Domain = get-ADdomain -Identity $currentDomain  # get domain info directly from a DC
 
-if ((!($Forest)) -or (!($Domain))) {
-    write-error ("Unable to contact to ADDS. Exiting.")
+if (-not $Domain) {  # Can't talk to a domain controller
+    write-error ("Unable to connect to a DC for `"$currentDomain`". Exiting.")
     exit
 }
 
@@ -167,55 +155,56 @@ if ($isGovCloud)  {
 
 Write-Verbose "SPN for new account will be $SPN"
 
-if (Get-AzStorageAccount -Name $storageAccount.StorageAccountName -ResourceGroupName $storageAccount.ResourceGroupName) {
-
-    # Make sure the target OU DN actually exists just to make sure
-    $OUlist = get-adobject -filter 'ObjectClass -eq "organizationalUnit"'
-    if ($oulist.distinguishedName -contains $ADOuDistinguishedName) {
-        if (get-ADComputer -Filter { Name -eq '$storageAccountName' } -ErrorAction SilentlyContinue) {
-            write-verbose ("Computer object $storageAccountName already exists in AD.")
-        } else {
-            write-verbose ("Creating computer object in AD...")
-            $result = New-ADComputer -name $storageAccount.StorageAccountName -path $ADOUDistinguishedName `
-                -Description "DO NOT DELETE - Azure File Share Authentication Account" `
-                -ServicePrincipalNames $SPN `
-                -PasswordNeverExpires $true `
-                -OperatingSystem "Azure Files" `
-                -AccountPassword $CompPassword
-        }
+# Make sure the target OU DN exists just to make sure
+$domainName = $domain.dnsroot
+$OUlist = get-adobject -filter 'ObjectClass -eq "organizationalUnit"'
+if ($oulist.distinguishedName -contains $ADOuDistinguishedName) {
+    if (get-ADComputer -Filter { Name -eq $storageAccountName } -ErrorAction SilentlyContinue) {
+        write-verbose ("Computer object $storageAccountName is present in $domainName")
     } else {
-        write-warning ("OU `"$ADOuDistinguishedName`" not found.")
-        exit
+        write-verbose ("Creating computer object in domain $domainName for $storageAccountName")
+        $result = New-ADComputer $storageAccount.StorageAccountName `
+            -path $ADOUDistinguishedName `
+            -Description "DO NOT DELETE - Azure File Share Authentication Account" `
+            -ServicePrincipalNames $SPN `
+            -PasswordNeverExpires $true `
+            -OperatingSystem "Azure Files" `
+            -AccountPassword $CompPassword
+        if (-not (get-ADComputer -Filter { Name -eq $storageAccountName } -ErrorAction SilentlyContinue)) {
+            $result
+            write-error ("Unable to create computer object for $storageAccountName in AD.")
+            exit
+        }
     }
 } else {
-    write-warning ("Storage account " + $storageAccount.StorageAccountName + " not found in RG " + $storageAccount.ResourceGroupName + ". Exiting")
+    write-warning ("OU `"$ADOuDistinguishedName`" not found.  Please verify that the OU exists and try again.")
+    exit
 }
 
-$Computer = get-ADComputer $storageAccount.StorageAccountName  # The computer object in AD for the share.
 
-# if you fail to create the account, it could be rights (often), but commonly the DN for the OU is wrong (folks guess at it!)
-# check to see what the DN actually is either in ADUC or pull all the OUs with the following command:
-# 	get-adobject -filter 'ObjectClass -eq "organizationalUnit"'
-
-###################################################
-#Step 3 update Storage account to use ADDS AuthN
-###################################################
+#######################################################
+# Step 3 Configure Azure storage account to use ADDS AuthN
+#######################################################
 #
 # Set the feature flag on the target storage account and provide the required AD domain information
 write-verbose ("Configuring " + $storageaccount.StorageAccountName + " for ADDS Authentication...")
+
+$Computer = get-ADComputer $storageAccount.StorageAccountName  # The computer object in AD for this storage account
+
 $updateresult = Set-AzStorageAccount `
         -ResourceGroupName $storageaccount.ResourceGroupName `
         -Name $storageaccount.StorageAccountName `
         -EnableActiveDirectoryDomainServicesForFile $true `
         -ActiveDirectoryDomainName $Domain.dnsroot `
         -ActiveDirectoryNetBiosDomainName $Domain.netbiosname `
-        -ActiveDirectoryForestName $Forest.name `
+        -ActiveDirectoryForestName $Domain.Forest `
 	    -ActiveDirectoryDomainGuid $Domain.ObjectGUID `
         -ActiveDirectoryDomainsid $Domain.DomainSID `
         -ActiveDirectoryAzureStorageSid $Computer.sid
 
 if (!($updateresult)) {
     write-warning "An error occurred while updating the storage account.  Exiting."
+    $updateresult
     exit 
 }
 

@@ -3,8 +3,8 @@ Miscellaneous Powershell scripts for use with Azure ARM
 
 ## Contents
 
-* **Configure-AzStorageAccountForADDSAuthN.ps1** - Configures an Azure storage account to use [Active Directory (ADDS) authentication](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-active-directory-enable).  This is intended as an alternative to the AzFilesHybrid module wihich is referenced in the above link.<br><br>
-* **Configure-AzFilesShareForFSLogixProfileContainers.ps1** - Applies the necessary IAM role assignments and NTFS permissions structure for an [Azure Files](https://azure.microsoft.com/en-us/services/storage/files/) share to work correctly with [FSlogix profile containers](https://docs.microsoft.com/en-us/azure/virtual-desktop/fslogix-containers-azure-files).<br><br>
+* (Updated Sept 2022) **Configure-AzStorageAccountForADDSAuthN.ps1** Configures an Azure storage account to use [Active Directory (ADDS) authentication](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-active-directory-enable).  This is a simpler alternative to the AzFilesHybrid module wihich is referenced in the above link.<br><br>
+* (Updated Sept 2022)**Configure-AzFilesShareForFSLogixProfileContainers.ps1** Sets up a file share on an Azure storage account and configures it for use with [FSlogix profile containers](https://docs.microsoft.com/en-us/azure/virtual-desktop/fslogix-containers-azure-files).<br><br>
 * **Configure-AzFilesShareForMSIXAppAttach.ps1** - Configures an Azure Files share permissions for use with [MSIX App Attach](https://docs.microsoft.com/en-us/azure/virtual-desktop/what-is-app-attach) and [Azure Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/)<br><br>
 * **Get-AvdHostPoolBilledCharges.ps1** - Takes the name of an [Azure Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/) host pool as a parameter and returns the actual billed charges for the compute and disk resources for a given time span (default prior 30 days if no start/end date specified).<br><br>
 * **Exterminate-AzureVM.ps1** - Deletes all elements of an Azure VM (compute, OS disk, data disks and NICs)
@@ -16,33 +16,29 @@ All scripts support the `-Verbose` parameter.  It is recommended to use this to 
 # Configure-AzStorageAccountForADDSAuthN.ps1
 
 
-This script configures an Azure storage account for ADDS Authentication as described [here](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-active-directory-enable).  It handles the necessary configuration in both the local AD and in Azure.
+This script configures an Azure storage account to use AD Domain Services (ADDS0 Authentication as described [here](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-active-directory-enable).  It handles the necessary configuration in both the local AD and in Azure.
 
 This is intended for use in place of the [AzFilesHybrid Powershell module](https://github.com/Azure-Samples/azure-files-samples/releases) which myself and others have found to be clunky and unreliable.  It works by automating the manual approach described in the "Option 2" steps in the link above to configure the storage account.
 
 This script will create a computer object in the local AD to represent the Kerberos identity for authentication.  The computer object will have the same username as the storage account.  **Do not delete this object** or you will break the ADDS authentication
 
-This script is based on prior work by John Kelbley, a member of the GBB team at Microsoft.
+Based on prior work by John Kelbley, a member of the GBB team at Microsoft.
+
+Adding the `-Verbose` parameter to the command will show the progress of the script as it runs.
 
 ### **Prerequisites**
 
-#### The VM you are using must have these two Powershell modules installed:
- * The **ActiveDirectory** module (part of the [RSAT](https://docs.microsoft.com/en-US/troubleshoot/windows-server/system-management-components/remote-server-administration-tools#rsat-for-windows-10-version-1809-or-later-versions) package on Windows 10 and later )
- * The **Az** module (`Install-Module Az`)
-
-#### Before running ####
-* Verify that the Powershell session is running as Administrator (elevated)
-* Use `Get-ADDomain` to verify the AD module is installed and working.
-* Use `Get-AzContext` to verify that the account and subscription names are correct
+* The system that you are running this script from must be joined to the same AD that you want to use for the storage account
+* The script needs the `Az.Accounts`, `Az.Resources` and `Az.Storage` modules and also the `ActiveDirectory` module to function.  If they are not present the script will attempt to install them.  The ActiveDirectory module is part of the RSAT tools for Windows which are installed using DISM.
 
 ## **Parameters**
 
 ### **storageAccountName**
 
-The name of the target storage account. **The name of the storage account must be 15 characters or less in length to avoid difficult-to-diagnose legacy netBIOS issues.**  The script will terminate if this limit is exceeded.  This can be a challenge in environments with complex naming conventions.
+The name of the target storage account. **The name of the storage account must be 15 characters or less in length to avoid difficult-to-diagnose legacy netBIOS issues.**  This can be a challenge in environments with complex naming conventions.
 
 ### **ADOuDistinguishedName**
-The full DN of the OU for the new computer object to be created in.
+The full DistinguiehedName (DN) of the OU for the new computer object to be created in.
 
 Example: `OU=MyOUName,DC=contoso,DC=com`
 
