@@ -16,7 +16,7 @@ All scripts support the `-Verbose` parameter.  It is recommended to use this to 
 # Configure-AzStorageAccountForADDSAuthN.ps1
 
 
-This script configures an Azure storage account to use AD Domain Services (ADDS0 Authentication as described [here](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-active-directory-enable).  It handles the necessary configuration in both the local AD and in Azure.
+This script configures an Azure storage account to use AD Domain Services (ADDS) Authentication as described [here](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-active-directory-enable).  It handles the necessary configuration in both the local AD and in Azure.
 
 This is intended for use in place of the [AzFilesHybrid Powershell module](https://github.com/Azure-Samples/azure-files-samples/releases) which myself and others have found to be clunky and unreliable.  It works by automating the manual approach described in the "Option 2" steps in the link above to configure the storage account.
 
@@ -38,7 +38,7 @@ Adding the `-Verbose` parameter to the command will show the progress of the scr
 The name of the target storage account. **The name of the storage account must be 15 characters or less in length to avoid difficult-to-diagnose legacy netBIOS issues.**  This can be a challenge in environments with complex naming conventions.
 
 ### **ADOuDistinguishedName**
-The full DistinguiehedName (DN) of the OU for the new computer object to be created in.
+The full DistinguishedName (DN) of the OU for the new computer object to be created in.
 
 Example: `OU=MyOUName,DC=contoso,DC=com`
 
@@ -53,7 +53,7 @@ Add this parameter if you are working in Azure Gov Cloud.  This is necessary bec
 
 This script applies the necessary Azure IAM role assignments and NTFS ACLs changes to configure an [Azure Files](https://azure.microsoft.com/en-us/services/storage/files/) share for use with [FSLogix Profile Containers](https://docs.microsoft.com/en-us/azure/virtual-desktop/create-file-share). 
 
-*This script was substantially revamped in September 2022 to eliminiate a number of legacy dependencies and hopefully make it easier to use.  If you used an older version please update.*
+*This script was substantially revamped in September 2022 to eliminate a number of legacy dependencies and hopefully make it easier to use.  If you used an older version please update.*
 
 It is strongly recommended to run with the `-Verbose` parameter for more detail on what it is doing.
 
