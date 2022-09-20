@@ -4,7 +4,7 @@ Miscellaneous Powershell scripts for use with Azure ARM
 ## Contents
 
 * (Updated Sept 2022) **Configure-AzStorageAccountForADDSAuthN.ps1** Configures an Azure storage account to use [Active Directory (ADDS) authentication](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-active-directory-enable).  This is a simpler alternative to the AzFilesHybrid module wihich is referenced in the above link.<br><br>
-* (Updated Sept 2022)**Configure-AzFilesShareForFSLogixProfileContainers.ps1** Sets up a file share on an Azure storage account and configures it for use with [FSlogix profile containers](https://docs.microsoft.com/en-us/azure/virtual-desktop/fslogix-containers-azure-files).<br><br>
+* (Updated Sept 2022) **Configure-AzFilesShareForFSLogixProfileContainers.ps1** Sets up a file share on an Azure storage account and configures it for use with [FSlogix profile containers](https://docs.microsoft.com/en-us/azure/virtual-desktop/fslogix-containers-azure-files).<br><br>
 * **Configure-AzFilesShareForMSIXAppAttach.ps1** - Configures an Azure Files share permissions for use with [MSIX App Attach](https://docs.microsoft.com/en-us/azure/virtual-desktop/what-is-app-attach) and [Azure Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/)<br><br>
 * **Get-AvdHostPoolBilledCharges.ps1** - Takes the name of an [Azure Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/) host pool as a parameter and returns the actual billed charges for the compute and disk resources for a given time span (default prior 30 days if no start/end date specified).<br><br>
 * **Exterminate-AzureVM.ps1** - Deletes all elements of an Azure VM (compute, OS disk, data disks and NICs)
@@ -18,32 +18,44 @@ All scripts support the `-Verbose` parameter.  It is recommended to use this to 
 
 This script configures an Azure storage account to use AD Domain Services (ADDS) Authentication as described [here](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-active-directory-enable).  It handles the necessary configuration in both the local AD and in Azure.
 
-This is intended for use in place of the [AzFilesHybrid Powershell module](https://github.com/Azure-Samples/azure-files-samples/releases) which myself and others have found to be clunky and unreliable.  It works by automating the manual approach described in the "Option 2" steps in the link above to configure the storage account.
+This is intended for use in place of the [AzFilesHybrid Powershell module](https://github.com/Azure-Samples/azure-files-samples/releases) which I've found to be clunky and unreliable.  The script works by automating the manual approach described in the "Option 2" steps in the link above to configure the storage account.
 
-This script will create a computer object in the local AD to represent the Kerberos identity for authentication.  The computer object will have the same username as the storage account.  **Do not delete this object** or you will break the ADDS authentication
+This script will create a computer object in the local AD to represent the storage account for Kerberos authentication.  The computer object will have the same name as the storage account.  **Do not delete this object** or you will break the ADDS authentication.  As a suggestion, create an OU dedicated to holding these special computer objects.
 
-Based on prior work by John Kelbley, a member of the GBB team at Microsoft.
+This is based on prior work by John Kelbley, a member of the GBB team at Microsoft.
 
-Adding the `-Verbose` parameter to the command will show the progress of the script as it runs.
 
 ### **Prerequisites**
 
-* The system that you are running this script from must be joined to the same AD that you want to use for the storage account
+* Powershell 7 or higher is required.
+* The system that you are running this script from must be joined to the same AD that you want to bind to the storage account
 * The script needs the `Az.Accounts`, `Az.Resources` and `Az.Storage` modules and also the `ActiveDirectory` module to function.  If they are not present the script will attempt to install them.  The ActiveDirectory module is part of the RSAT tools for Windows which are installed using DISM.
+
+
+### How to use
+
+1. Gather the following information:
+    * The **name of the storage account** to configure
+    * The full **DistinguishedName (DN)** of the OU to create the new computer object in.
+2. Log in as a domain user with permission to add a computer to the specified OU
+3. Connect to Azure with `Connect-AzAccount` as a user with permission to configure the target storage account
+4. Run the script using a command line like this one<br> `Configure-AzStorageAccountForADDSAuthN.ps1 -storageAccountName "myStorageAccount" -ADOuDistinguishedName "OU=MyOU,DC=MyDomain,DC=local" -Verbose`
+
+Using the `-Verbose` parameter will show detailed progress of the script as it runs.
 
 ## **Parameters**
 
 ### **storageAccountName**
 
-The name of the target storage account. **The name of the storage account must be 15 characters or less in length to avoid difficult-to-diagnose legacy netBIOS issues.**  This can be a challenge in environments with complex naming conventions.
+The name of the target storage account. The name must be 15 characters or less in length to avoid difficult-to-diagnose legacy netBIOS issues.  This can be a challenge in environments with elaborate naming conventions.
 
 ### **ADOuDistinguishedName**
 The full DistinguishedName (DN) of the OU for the new computer object to be created in.
 
-Example: `OU=MyOUName,DC=contoso,DC=com`
+Example: `OU=Azure Storage Accounts,DC=contoso,DC=com`
 
 ### **IsGovCloud** (ONLY FOR Azure Gov Cloud)
-Add this parameter if you are working in Azure Gov Cloud.  This is necessary because the SPN format for the kerberos configuration is different between the public and government clouds.
+Add this parameter if you are working in Azure Gov Cloud.  This is necessary because the SPN format for the kerberos configuration is different between the public and government clouds.  If you don't know what "gov cloud" is then you don't need this parameter :-)
 
 ![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/ConfigureAzStorageAccountForADDAuthNScreenshot.PNG)
 
@@ -51,36 +63,43 @@ Add this parameter if you are working in Azure Gov Cloud.  This is necessary bec
 
 # Configure-AzFilesShareForFSLogixProfileContainers.ps1
 
-This script applies the necessary Azure IAM role assignments and NTFS ACLs changes to configure an [Azure Files](https://azure.microsoft.com/en-us/services/storage/files/) share for use with [FSLogix Profile Containers](https://docs.microsoft.com/en-us/azure/virtual-desktop/create-file-share). 
+This script works against an Azure storage account to configure an [Azure Files](https://azure.microsoft.com/en-us/services/storage/files/) share for use with [FSLogix Profile Containers](https://docs.microsoft.com/en-us/azure/virtual-desktop/create-file-share) by applying the necessary IAM roles and NTFS permissions.
 
-*This script was substantially revamped in September 2022 to eliminate a number of legacy dependencies and hopefully make it easier to use.  If you used an older version please update.*
-
-It is strongly recommended to run with the `-Verbose` parameter for more detail on what it is doing.
 
 ## **Prerequisites**
 
 The following things should be true of the system that you are using to run the script:
-* The system running the script must have network visibility to the Azure Files share on port 445 (SMB).  
-* The script uses a few modules from the Az Powershell module: `Az.Accounts`, `Az.Resources` and `Az.Storage`.  If these are not present in the local system they will be installed automatically.
+* PowerShell 7 is required.  This is not installed by default in most cases.  You can download the current version of PowerShell for Windows from [here](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows).
+* The system running the script must have network visibility to the Azure Files share on port 445 (SMB).
+* The script uses a few pieces of [Az PowerShell module](https://learn.microsoft.com/en-us/powershell/azure/new-azureps-module-az): `Az.Accounts`, `Az.Resources` and `Az.Storage`.  If these are not present in the local system they will be installed automatically with scope `CurrentUser`.
 
-## Preparing to run the script
-* **Connect to Azure** using `Connect-AzAccount`.  Make sure to use an account with `Owner` privileges on the target storage account.  This connection must be made by a user account, not a service principal.
-* Verify that  the system can connect to the storage account using `Test-NetConnection -ComputerName <storageaccountname>.file.core.windows.net -Port 445`.  If this fails, there is probably a firewall or other connectivity issue that must be resolved before proceeding.
+### How to use
+
+1. Gather the following information:
+    * The **name of the storage account** to configure
+    * The **share name**.  If the share doesn't exist then it will be created.
+    * The name of an **AD group for unprivileged users that will access the share** in an ordinary capacity (e.g. nonprivileged users).  This group will be assigned the built-in Azure role `Storage File Data SMB Share Contributor` which allows basic CRUD actions on files inside the share.
+    * The name of an **AD group for privileged users** (e.g. admins).  These users will be able to work with other users' profile VHDs.  This group will be assigned the built-in Azure role `Storage File Data SMB Share Elevated Contributor` which allows them to perform all operations on the share.
+2. Connect to Azure with `Connect-AzAccount` as a user with permission to configure the target storage account
+3. Run the script using a command line like this one<br>`Configure-AzStorageAccountForADDSSuthN.ps1 -storageAccountName "myStorageAccount" -profileSharename myprofiles -userGroup "MyUsers" -adminGroup "MyAdmins" -Verbose`
+
+Using the `-Verbose` parameter will show detailed progress of the script as it runs.
+
 
 ## Parameters
 
-### **storageAccountName**
+### **storageAccountName** (string)
 The name of the storage account that holds the Azure Files share.  It is assumed that this share is configured for ADDS authentication.
 
-### **ProfileShareName**
+### **ProfileShareName** (string)
 
 The name of the file share to configure.  If this share name does not exist it will be created for you.  If the filename contains mixed case characters the name will be converted to all-lowercase as required by Azure Files.  For the full list of share name constraints see [this link](https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-shares--directories--files--and-metadata#share-names)
 
 
-### **ShareAdminGroupName**
+### **ShareAdminGroupName** (string)
 The name of an Active directory group which contains users that should have privileged (full control) access to the Azure Files share.  This group must be synced to Azure AD.  It will be assigned IAM role [Storage File Data SMB Share Elevated Contributor](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-elevated-contributor)
 
-### **ShareUserGroupName**
+### **ShareUserGroupName** (string)
 The name of an Active directory group which contains end users that will have their profiles stored on the Azure Files share.  This group must be synced to Azure AD.  It will be assigned IAM role [Storage File Data SMB Share Contributor](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-contributor)
 
 ![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/Configure-AzFilesShareForFSLogixProfileContainers.PNG)
