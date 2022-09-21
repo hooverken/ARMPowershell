@@ -50,6 +50,7 @@ Using the `-Verbose` parameter will show detailed progress of the script as it r
 The name of the target storage account. The name must be 15 characters or less in length to avoid difficult-to-diagnose legacy netBIOS issues.  This can be a challenge in environments with elaborate naming conventions.
 
 ### **ADOuDistinguishedName**
+
 The full DistinguishedName (DN) of the OU for the new computer object to be created in.
 
 Example: `OU=Azure Storage Accounts,DC=contoso,DC=com`
@@ -127,15 +128,15 @@ The name of the file share to use.  If this share name does not exist it will be
 
 
 ### **AppAttachSessionHostManagedIdAADGroupName**
-The name of an **Azure AD group** containing the [system-managed identities](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-managed-identities-work-vm) of the WVD session hosts that will be using the share.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.<br><br>
+The name of an **Azure AD group** containing the [system-managed identities](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-managed-identities-work-vm) of the session hosts that will be using the share.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.<br><br>
 IMPORTANT:  These identities are **not the same thing** as device objects that are synced from onprem AD (if device sync is enabled)
 
 
 ### **AppAttachUsersADDSGroupName**
-The name of an <b>onprem AD group</b> containing the managed identities of the WVD session hosts that will be using the share.  This group must be synchronized to Azure AD.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
+The name of an <b>onprem AD group</b> containing the managed identities of the session hosts that will be using the share.  This group must be synchronized to Azure AD.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
 
 ### **AppAttachComputersADDSGroupName**
-The name of an <b>onprem AD group</b> containing the computer objects of the WVD session hosts that will be using the share.  This group must be synchronized to Azure AD.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
+The name of an <b>onprem AD group</b> containing the computer objects of the session hosts that will be using the share.  This group must be synchronized to Azure AD.  This group will be granted the [Storage File Data SMB Data Reader](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-reader) IAM role on the share.
 
 ### **IsGovCloud**
 <b>This parameter is optional.  If not specified the default is to use the Azure commercial cloud</b><br>
