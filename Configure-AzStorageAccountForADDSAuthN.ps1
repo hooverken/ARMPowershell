@@ -9,8 +9,7 @@
 # last update Sept 2022
 
 ###############################################################################################################
-#  This is the "Manual" process to configure AD authentication for Azure Files
-#  (automated!)
+#  This is the "Manual" process to configure AD authentication for Azure Files, automated!
 #
 #  Assumes:
 #   * You are executing this script as a user with rights to create a computer account in the AD OU provided
@@ -31,6 +30,7 @@
 #               Auto-install of missing modules
 #               Installs RSAT tools if not present (needed for ActiveDirectory module)
 #               Simplified logic in a few places.
+#               Removed isGovCloud parameter since we can set the SPN using attributes of the storage account
 
 <#
 .SYNOPSIS
@@ -57,10 +57,6 @@ The name of the storage account to configure.  The storage account must exist an
 
 The full distinguished name (DN) of the OU in AD where the computer account will be created, such as "OU=MyOU,DC=MyDomain,DC=local"
 
-.PARAMETER IsGovCloud
-
-Indicates whether the storage account to modify is in a US Government Azure environment
-
 .EXAMPLE
 
     .\Configure-AzStorageAccountForADDSAuthN.ps1 -storageAccountName "myStorageAccount" -ADOUDistinguishedName "OU=MyOU,DC=MyDomain,DC=local"
@@ -79,10 +75,10 @@ Indicates whether the storage account to modify is in a US Government Azure envi
 [CmdletBinding()]
 param(
     [Parameter(mandatory = $true)][ValidateLength(1,15)][string]$storageAccountName,     # The name of the storage account with the share
-    [Parameter(mandatory = $true)][string]$ADOuDistinguishedName,   # The full DN of the OU to put the new computer object in
-    [Parameter(mandatory = $false)][switch]$IsGovCloud              # MUST add this parameter if you're working in Azure Gov Cloud, otherwise don't use it
+    [Parameter(mandatory = $true)][string]$ADOuDistinguishedName   # The full DN of the OU to put the new computer object in
 )
 
+########################################################################################
 
 # Check as many of the prerequisites as we can before we do anything.
 
@@ -136,15 +132,15 @@ if ($null -eq $currentContext) {
 # This method is inefficient and can take several seconds but doing it this way means that we don't need to ask 
 # the user for the RG name.
 # Since storage account names must be globally unique the chance of getting the "wrong" storage account from this is basically zero.
-write-verbose ("Verifying that $storageAccountName exists.  This will take a moment..." )
+write-verbose ("Verifying that $storageAccountName exists.  This may take a moment." )
 $storageAccount = Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $storageAccountName}
 
 if ($null -ne $storageAccount) {
     # First make sure that this storage account is not already configured for ADDS.  If so, exit so we don't touch it.
-    Write-verbose "Checking to see if this $storageAccountName is already configured for AD authentication..."
+    Write-verbose "Checking to see if $storageAccountName is already configured for AD authentication..."
     if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD") -and `
         ($storageaccount.AzureFilesIdentityBasedAuth.ActiveDirectoryProperties.DomainName)) {
-        write-warning ("Storage account $storageAccountName is already configured to use domain " + ($storageaccount.AzureFilesIdentityBasedAuth.ActiveDirectoryProperties.DomainName + " for authentication."))
+        write-warning ("Storage account $storageAccountName is configured to use domain " + ($storageaccount.AzureFilesIdentityBasedAuth.ActiveDirectoryProperties.DomainName + " for authentication."))
         exit 
     } else {
         # The storage account is not configured for ADDS
@@ -162,10 +158,14 @@ if ($null -ne $storageAccount) {
 }
 
 # Verify that we can connect to the storage account's file service on port 445.
-if (Test-NetConnection -ComputerName "$storageAccountName.file.core.windows.net" -Port 445 -InformationLevel Quiet) {
-    Write-Verbose ("Connectivity to $storageAccountName.file.core.windows.net on port 445/TCP confirmed.")
+
+$result = ($storageaccount.PrimaryEndpoints.file -match "//(.*)/")
+$fileEndpoint = $matches[1]
+
+if (Test-NetConnection -ComputerName $fileEndpoint -Port 445 -InformationLevel Quiet) {
+    Write-Verbose ("Connectivity to $fileEndpoint on port 445/TCP confirmed.")
 } else {
-    Write-Warning ("Unable to connect to $storageAccountName.file.core.windows.net on port 445.  Please verify that the storage account exists and that the file service is enabled.")
+    Write-Warning ("Unable to connect to $fileEndpoint on port 445.  Please verify that the storage account exists and that the file service is enabled.")
     exit
 }
 
@@ -174,25 +174,16 @@ if (Test-NetConnection -ComputerName "$storageAccountName.file.core.windows.net"
 # Create Computer Account and SPN; get AD information
 
 # AD Settings - These pull the info we need about the AD domain
-$currentDomain = (get-computerinfo).csdomain  # the domain that this computer is joined to
-$Domain = get-ADdomain -Identity $currentDomain  # get domain info directly from a DC
+$currentDomain = (get-computerinfo).csdomain  # Get the domain that the local computer is joined to
+$Domain = get-ADdomain -Identity $currentDomain  # get domain info for that domain from a DC
 
 if (-not $Domain) {  # Can't talk to a domain controller
     write-error ("Unable to connect to a DC for `"$currentDomain`". Exiting.")
     exit
 }
 
-# For Azure Commercial
-# SPN looks like    :		cifs/your-storage-account-name-here.file.core.windows.net	
-# For Gov looks like:		cifs/your-storage-account-name-here.file.core.usgovcloudapi.net 
-
-if ($isGovCloud)  {
-	$SPN = "cifs/$storageAccountName.file.core.usgovcloudapi.net" 
-} Else { 
-	$SPN = "cifs/$storageAccountName.file.core.windows.net" 
-}
-
-Write-Verbose "SPN for new account will be $SPN"
+$SPN = "cifs/$fileEndpoint"  # the SPN we will create for the computer account.  This should work everywhere (including gov cloud)
+Write-Verbose ("Active Directory SPN for this storage account will be $SPN")
 
 # Make sure the target OU DN exists just to make sure
 $domainName = $domain.dnsroot
@@ -221,9 +212,9 @@ if ($oulist.distinguishedName -contains $ADOuDistinguishedName) {
 }
 
 
-#######################################################
+#############################################################
 # Step 3 Configure Azure storage account to use ADDS AuthN
-#######################################################
+#############################################################
 #
 # Set the feature flag on the target storage account and provide the required AD domain information
 write-verbose ("Configuring " + $storageaccount.StorageAccountName + " for ADDS Authentication...")

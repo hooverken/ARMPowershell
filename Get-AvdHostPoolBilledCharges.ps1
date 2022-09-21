@@ -10,6 +10,7 @@
 
 # If the start/end dateTime values are not specified, the script will default to the last 30 days.
 
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][String]$AVDHostPoolName,

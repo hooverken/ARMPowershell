@@ -54,10 +54,7 @@ The full DistinguishedName (DN) of the OU for the new computer object to be crea
 
 Example: `OU=Azure Storage Accounts,DC=contoso,DC=com`
 
-### **IsGovCloud** (ONLY FOR Azure Gov Cloud)
-Add this parameter if you are working in Azure Gov Cloud.  This is necessary because the SPN format for the kerberos configuration is different between the public and government clouds.  If you don't know what "gov cloud" is then you don't need this parameter :-)
-
-![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/ConfigureAzStorageAccountForADDAuthNScreenshot.PNG)
+![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/ConfigureAzStorageAccountForADDAuthN.PNG)
 
 ---
 

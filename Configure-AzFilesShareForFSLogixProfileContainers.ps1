@@ -55,10 +55,6 @@ The name of an Azure AD group which will be granted full control of the share.  
 
 The name of an Azure AD group which will be granted basic read/write access to the share.  This group must already exist in Azure AD and will be assigned the IAM role "Storage File Data SMB Share Contributor" on the specified share.
 
-.PARAMETER IsGovCloud
-
-Indicates whether the storage account to modify is in a US Government Azure environment
-
 .EXAMPLE
 
     .configure-AzFilesShareForFSLogixProfileContainers.ps1 -storageAccountName "myaccount" -profileShareName "fslogix" -ShareAdminGroupName "FSLogixAdmins" -ShareUserGroupName "FSLogixUsers"

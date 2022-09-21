@@ -33,10 +33,21 @@ param(
     [Parameter(mandatory = $true)][string]$storageAccountName,  # The name of the storage account with the share
     [Parameter(mandatory = $true)][string]$shareName,           # The name of the share.  The share will be created if it does not exist.
 #    [Parameter(mandatory = $true)][string]$AppAttachSessionHostManagedIdAADGroupName,  # The name of an AD group containing the computer objects of the machines that need to use attached apps.  This group must be synchronized to AzureAD
-    [Parameter(mandatory = $true)][string]$AppAttachUsersADDSGroupName, # The name of an AD group containing users that can access attached apps
-    [Parameter(mandatory = $true)][string]$AppAttachComputersADDSGroupName, # The name of an AZURE AD group containing the managed identities of the VM's that will be using app attach
-    [Parameter(mandatory = $false)][switch]$IsGovCloud         # MUST add this parameter if you're working in Azure Gov Cloud, otherwise don't use it
-)
+    [Parameter (Mandatory = $False, ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)][string]$appAttachADUsersGroup = "Domain Users",
+    [Parameter (Mandatory = $False, ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)][string]$appAttachADComputersGroup = "Domain Computers"
+    )
+
+# If the AD groups for users and/or computers are not specified then "Domain Users" and "Domain Computers" will be used
+
+##################################################################################
+
+
+# The following things must all be true for MSIX App Attach to work correctly:
+
+# - The VM's in the host pool must have system-managed identities enabled
+# - There must be a group in AAD containing the managed identities
+# - The target storage account must be configured for ADDS Authentication
+# 
 
 
 # Some sanity checks before we get started
@@ -53,19 +64,30 @@ if ($null -eq $currentContext) {
 # ref: https://docs.microsoft.com/en-us/rest/api/storageservices/Naming-and-Referencing-Shares--Directories--Files--and-Metadata
 $sharename = $sharename.ToLower()
 
-# Confirm that the storage account specified actually exists
+# Confirm that the storage account specified actually exists and that we can connect to it.
 # Yes, this method is slow but it means that we don't need to ask the user for the resource group name of the storage account
-write-verbose ("Verifying that $storageAccountName exists.  This will take a moment..." )
+write-verbose ("Verifying that $storageAccountName exists.  This will take a moment." )
 $storageAccount = Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $storageAccountName }
-
-Write-Verbose ("Verifying that we can connect to the storage account")
 if ($storageAccount) {
-    # Grab the RG name that the storage account is in since we'll need it.
-    $storageAccountRGName = $storageaccount.ResourceGroupName
+    write-verbose ("Storage account $storageAccountName is in Resource Group " + $storageaccount.ResourceGroupName)
+    if ($storageaccount.PrimaryEndpoints.file -match "//(.*)/") {
+        $endpointFqdn = $matches[1]
+        # Verify that we can connect to the storage account's file endpoint on port 445.
+        if (Test-NetConnection -ComputerName $endpointFqdn -Port 445 -InformationLevel Quiet) {
+            Write-Verbose ("Connectivity to $endpointFqdn on port 445/TCP confirmed.")
+        } else {
+            Write-Warning ("Unable to connect to $endpointFqdn on port 445/TCP.`n ** Please verify that the storage account exists, is accessible from this workstation and that the file service is enabled.")
+            exit
+        }
+    } else {
+        Write-Warning "No valid file endpoint found for $storageaccountName.  Make sure that the file service is enabled on the storage account."
+        exit
+    }
 } else {
-    Write-Warning ("Storage account $storageAccountName not found in current subscription.")
+    Write-Warning ("Storage account $storageAccountName not found in subscription ID " + $currentContext.Subscription + ".")
     exit
 }
+
 
 # Verify that the storage account does not have shared key AuthN disabled.
 # Ref: https://docs.microsoft.com/en-us/azure/storage/common/shared-key-authorization-prevent?tabs=portal
@@ -84,16 +106,8 @@ if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD
     exit 
 }
 
-# Get the storage account key (we'll use this later)
-Write-Verbose ("Getting storage account key for $storageAccountName...")
-$storageAccountKey = (get-AzStorageAccountKey -ResourceGroupName $storageAccount.ResourceGroupName -Name $storageAccount.StorageAccountName)[0].Value
-if ($null -eq $storageAccountKey) { 
-    write-warning ("Unable to retrieve storage account key for $storageAccountName")
-    exit 
-}
 
 # Check that the specified file share exists.  If it doesn't then create it.
-
 Write-verbose ("Setting storage context...")
 $storageContext = New-AzStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageAccountKey
 Write-Verbose ("Checking if share $sharename exists in storage account $storageAccountName...")
@@ -103,13 +117,13 @@ if ($null -eq (get-AzStorageShare -Name $sharename -Context $storageContext -Err
 } else {
     write-verbose ("Share $sharename is present (OK)")
 }
+
 ###############################################################################################
 # Set default file share permission for this storage account to StorageFileDataSmbShareReader
-#
-# This avoids having to do individual IAM role assignments which makes this a lot simpler than it used to be
+# This avoids having to do individual IAM role assignments which makes this script a lot simpler than it used to be
 
 $defaultPermission = "StorageFileDataSmbShareReader" # Default permission (IAM Role) for the share
-write-verbose ("Setting default File share permissions for "+ $storageaccount.storageAccountName + "... ")
+write-verbose ("Setting default File share permissions for "+ $storageaccount.storageAccountName + "to $defaultPermission")
 $storageAccount = Set-AzStorageAccount -ResourceGroupName $storageAccount.ResourceGroupName `
                                        -AccountName $storageAccount.StorageAccountName `
                                        -DefaultSharePermission $defaultPermission
@@ -123,73 +137,26 @@ if (!($storageAccount.AzureFilesIdentityBasedAuth.DefaultSharePermission -eq $de
 }
 
 
-#####################################################
-# Set IAM Roles for the share
-
-# Required permissions/iam roles for MSIX App Attach:
-#
-# The following items need the "Storage File SMB Data Reader" IAM Role
-#
-# * The managed identities of WVD session hosts (ref: https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/qs-configure-portal-windows-vm )
-# * The AD users that need to use attached apps (users must be synced with onprem AD)
-# * The AD computer objects of the systems that will be connecting to the share
-
-## Set the IAM Roles on the file share
-
-# Write-verbose ("Setting storage context...")
-# $storageContext = New-AzStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageAccountKey
-
-# # Verify that the target share exists.  If not, create it.
-# Write-Verbose ("Checking if share $sharename exists in storage account $storageAccountName...")
-# if ($null -eq (get-AzStorageShare -Name $sharename -Context $storageContext -ErrorAction SilentlyContinue)) {
-#     write-verbose ("File share $sharename does not exist.  Creating new share $sharename...")
-#     New-AzStorageShare -Name $sharename -Context $storageContext
-# } else {
-#     write-verbose ("Share $sharename is present (OK)")
-# }
-
-
-# # Retrieve the object ID's for the AzureAD groups that need IAM roles assigned
-# Write-Verbose ("Retrieving AzureAD group information...")
-# $MSIXHostManagedIdentitiesGroup = Get-AzAdGroup -DisplayName $AppAttachSessionHostManagedIdAADGroupName -ErrorAction SilentlyContinue
-# $MSIXAppAttachAADUsersGroup     = Get-AzAdGroup -DisplayName $AppAttachUsersADDSGroupName -ErrorAction SilentlyContinue
-# $MSIXAppAttachADDSComputerGroup = Get-AzAdGroup -DisplayName $AppAttachComputersADDSGroupName -ErrorAction SilentlyContinue
-
-# if(-not ($MSIXHostManagedIdentitiesGroup -and $MSIXAppAttachAADUsersGroup -and $MSIXAppAttachADDSComputerGroup)) {
-#     write-warning ("Could not find group name $AppAttachComputersADDSGroupName, $AppAttachSessionHostManagedIdAADGroupName or $AppAttachUsersADDSGroupName.  Please verify names and try again.")
-#     exit
-# }
-
-# # Set the scope for the role assignment (just the share)
-# $scope = (Get-AzStorageAccount -Name $storageAccountName -ResourceGroupName $storageAccountRGName).Id + "/fileservices/default/fileshares/" + $shareName
-
-# # Grant the "Storage File Data SMB Share reader" roles to the three groups
-# write-verbose ("Assigning role Storage File Data SMB Share Reader to group `"" + $MSIXHostManagedIdentitiesGroup.DisplayName + "`"...")
-# $result = New-AzRoleAssignment -RoleDefinitionName "Storage File Data SMB Share Reader" -Scope $scope -ObjectId $MSIXHostManagedIdentitiesGroup.Id
-
-# write-verbose ("Assigning role Storage File Data SMB Share Reader to group `"" + $MSIXAppAttachADDSComputerGroup.DisplayName + "`"...")
-# $result = New-AzRoleAssignment -RoleDefinitionName "Storage File Data SMB Share Reader" -Scope $scope -ObjectId $MSIXAppAttachADDSComputerGroup.Id
-
-# write-verbose ("Assigning role Storage File Data SMB Share Reader to group `"" + $MSIXAppAttachAADUsersGroup.DisplayName + "`"...")
-# $result = New-AzRoleAssignment -RoleDefinitionName "Storage File Data SMB Share Reader" -Scope $scope -ObjectId $MSIXAppAttachAADUsersGroup.Id
-
-
 # Update NTFS permissions so the AD objects can access the share
 Write-Verbose ("Setting NTFS permissions for share $shareName...")
 
 
-$ShareName  = $shareName
-$drive      = "Y:"
-$path       = $Drive + "\"
+# Find an unused drive letter to map to the file share
+$unusedDriveLetters = [Char[]](90..65) | Where-Object { (Test-Path "${_}:\") -eq $false }
+$driveLetter = $unusedDriveLetters[0] + ":"  # using the first one
 
-if ($isGovCloud) {
-    $MapPath = "\\"+$storageAccountName+".file.core.usgovcloudapi.net\"+$sharename
-} else {
-    $MapPath = "\\"+$storageAccountName+".file.core.windows.net\"+$sharename
+$MapPath = "\\$endpointfqdn\"+$sharename  # The complete UNC path to the share
+
+# Get the storage account key 
+Write-Verbose ("Getting storage account key for $storageAccountName...")
+$storageAccountKey = (get-AzStorageAccountKey -ResourceGroupName $storageAccount.ResourceGroupName -Name $storageAccount.StorageAccountName)[0].Value
+if ($null -eq $storageAccountKey) { 
+    write-warning ("Unable to retrieve storage account key for $storageAccountName")
+    exit 
 }
 
 write-verbose ("Mounting $MapPath...")
-$result = new-smbmapping -LocalPath $drive -RemotePath $MapPath -UserName $storageAccountName -Password $storageAccountKey -Persistent $false
+$result = new-smbmapping -LocalPath $driveLetter -RemotePath $MapPath -UserName $storageAccountName -Password $storageAccountKey -Persistent $false
 
 if (!($result.status -eq "OK")) {
     write-warning "Attempt to mount $MapPath failed."
@@ -198,19 +165,19 @@ if (!($result.status -eq "OK")) {
 
 Write-verbose ("Successfully mounted $MapPath as drive $drive")
 
-write-verbose ("Adding `"Users`" to NTFS ACL on the file share (ReadAndExecute)...")
+write-verbose ("Adding `"$appAttachADUsersGroup`" to NTFS ACL on the file share (ReadAndExecute)...")
 $acl = Get-Acl $path
-$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList "Users", "ReadAndExecute", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
+$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $appAttachADUsersGroup, "ReadAndExecute", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
 $acl.SetAccessRule($rule)
 $result = $acl | Set-Acl -Path $path
 
-write-verbose ("Adding `"$AppAttachComputersADDSGroupName`" to NTFS ACL on the file share (ReadAndExecute)...")
+write-verbose ("Adding `"$appAttachADComputersGroup`" to NTFS ACL on the file share (ReadAndExecute)...")
 $acl = Get-Acl $path
-$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $AppAttachComputersADDSGroupName, "ReadAndExecute", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
+$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $appAttachADComputersGroup, "ReadAndExecute", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
 $acl.SetAccessRule($rule)
 $result = $acl | Set-Acl -Path $path
 
 Write-Verbose ("Removing drive mapping...")
-Remove-SmbMapping -LocalPath $drive -Force
+Remove-SmbMapping -LocalPath $driveLetter -Force
 
 Write-Verbose ("Execution complete.")
