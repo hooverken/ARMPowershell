@@ -37,7 +37,7 @@ This is based on prior work by John Kelbley, a member of the GBB team at Microso
 1. Gather the following information:
     * The **name of the storage account** to configure
     * The full **DistinguishedName (DN)** of the OU to create the new computer object in.
-2. Log in as a domain user with permission to add a computer to the specified OU
+2. Log in as a domain user with permission to add a computer to the specified OU.
 3. Connect to Azure with `Connect-AzAccount` as a user with permission to configure the target storage account
 4. Run the script using a command line like this one<br> `Configure-AzStorageAccountForADDSAuthN.ps1 -storageAccountName "myStorageAccount" -ADOuDistinguishedName "OU=MyOU,DC=MyDomain,DC=local" -Verbose`
 

@@ -9,7 +9,7 @@
 # Prerequisites:
 #
 #  - The local system must have network visibility to the storage account on port 445
-#  - Powersshell 7 is required
+#  - Powershell 7 is required
 
 # CHANGELOG
 # 19 May 2021 : Detect if shared-key access is disabled and warn/exit if this is the case.  This breaks the NTFS
@@ -21,6 +21,52 @@
 #               Storage account name length validated (finally) at the parameter level
 #               Improved checking of runtime prerequisites
 #               Improved handling of IAM role assignments and drive mapping
+
+<#
+.SYNOPSIS
+
+This script configures an Azure Files share for use with FSLogix profile containers.
+
+.DESCRIPTION
+
+This script configures an Azure Files share for use with FSLogix profile containers with permissions as described in the FSLogix documentation https://learn.microsoft.com/en-us/fslogix/fslogix-storage-config-ht.
+    
+To use it, follow these steps:
+
+1. Log into a workstation which has network visibility to the selected Azure storage account on port 445/TCP
+
+2. Connect to Azure using Connect-AzAccount and use Select-AzSubscription to switch context to the subscription where the storage account is located.
+
+3. Run this script with the four required parameters.
+
+.PARAMETER storageAccountName
+
+The name of the storage account to configure.  The storage account must exist and have a name which is 15 characters or less in length to avoid legacy NetBIOS naming issues.
+
+.PARAMETER profileShareName
+
+The name of the file share to configure.  If the share does not exist, it will be created.  If the share name provided has mixed-case characters it will be converted to all-lowercase as required by Azure Files.
+
+.PARAMETER ShareAdminGroupName
+
+The name of an Azure AD group which will be granted full control of the share.  This group must already exist in Azure AD and will be assigned the "Storage File Data SMB Share Elevated Contributor" role on the specificd share.
+
+.PARAMETER ShareUserGroupName
+
+The name of an Azure AD group which will be granted basic read/write access to the share.  This group must already exist in Azure AD and will be assigned the IAM role "Storage File Data SMB Share Contributor" on the specified share.
+
+.PARAMETER IsGovCloud
+
+Indicates whether the storage account to modify is in a US Government Azure environment
+
+.EXAMPLE
+
+    .configure-AzFilesShareForFSLogixProfileContainers.ps1 -storageAccountName "myaccount" -profileShareName "fslogix" -ShareAdminGroupName "FSLogixAdmins" -ShareUserGroupName "FSLogixUsers"
+
+
+.LINK
+    https://www.github.com/hooverken/ARM-Powershell
+#>
 
 
 #Requires -Version 7.0

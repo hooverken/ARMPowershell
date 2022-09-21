@@ -15,7 +15,6 @@
 #  Assumes:
 #   * You are executing this script as a user with rights to create a computer account in the AD OU provided
 #   * You are running this script from a system that is joined to the same AD that you want to use for authentication
-#   * You have the "Az" module installed
 #   * You have connected to Azure using Connect-AzAccount and used Select-AzSubscription to switch context to the
 #     subscription where the storage account is located.
 #	* You have AAD synced to AD (have you confirmed this is working?)
@@ -33,6 +32,46 @@
 #               Installs RSAT tools if not present (needed for ActiveDirectory module)
 #               Simplified logic in a few places.
 
+<#
+.SYNOPSIS
+
+This script configures an Azure storage account for authentication using ADDS Authentication.
+
+.DESCRIPTION
+
+This script configures an Azure storage account for authentication using ADDS Authentication  
+    
+To use it, follow these steps:
+
+1. Log into a workstation which is joined to the same AD domain that you want the storage account to use for authentication using an AD user with permission to add a computer object to the desired OU
+
+2. Connect to Azure using Connect-AzAccount and use Select-AzSubscription to switch context to the subscription where the storage account is located.
+
+3. Run this script, providing the storage account name and the DN of the OU to create the new computer object in as parameters.
+
+.PARAMETER storageAccountName
+
+The name of the storage account to configure.  The storage account must exist and have a name which is 15 characters or less in length to avoid legacy NetBIOS naming issues.
+
+.PARAMETER ADOUDistinguishedName
+
+The full distinguished name (DN) of the OU in AD where the computer account will be created, such as "OU=MyOU,DC=MyDomain,DC=local"
+
+.PARAMETER IsGovCloud
+
+Indicates whether the storage account to modify is in a US Government Azure environment
+
+.EXAMPLE
+
+    .\Configure-AzStorageAccountForADDSAuthN.ps1 -storageAccountName "myStorageAccount" -ADOUDistinguishedName "OU=MyOU,DC=MyDomain,DC=local"
+
+.EXAMPLE
+
+    .\Configure-AzStorageAccountForADDSAuthN.ps1 -storageAccountName "myStorageAccount" -ADOUDistinguishedName "OU=MyOU,DC=MyDomain,DC=local" -IsGovCloud
+
+.LINK
+    https://www.github.com/hooverken/ARM-Powershell
+#>
 
 #requires -runasAdministrator
 #requires -version 7.0
