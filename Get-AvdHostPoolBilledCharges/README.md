@@ -36,4 +36,4 @@ dateTime values defining the date range to return data from.  If either the star
 *IMPORTANT: Billing data can lag by a few days so cost information for charges incurred less than 48 hours ago may not be accurate (or even present).*<br><br>
 
 Sample Output (may not exactly match)
-![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/Get-AvdHostPoolBilledCharges-Output-Screeenshot.png)
+![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/Get-AvdHostPoolBilledCharges/Get-AvdHostPoolBilledCharges-Output-Screeenshot.png)

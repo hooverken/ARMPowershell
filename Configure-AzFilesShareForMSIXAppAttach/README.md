@@ -37,4 +37,4 @@ The name of an <b>onprem AD group</b> containing the computer objects of the ses
 If you are working with a US Gov Cloud Azure environment, add this parameter to the command line.  This is necessary because the Azure Files endpoint name suffixes are different for Gov cloud vs the commercial (public) cloud.
 </ul>
 
-![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/Configure-AzFilesShareForMSIXAppAttach.PNG)
+![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/Configure-AzFilesShareForMSIXAppAttach/Configure-AzFilesShareForMSIXAppAttach.PNG)
