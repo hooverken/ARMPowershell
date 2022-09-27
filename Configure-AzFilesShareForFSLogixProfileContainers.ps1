@@ -246,7 +246,9 @@ write-verbose ("Mounting $MapPath")
 $result = new-smbmapping -LocalPath $driveLetter -RemotePath $MapPath -UserName $storageAccountName -Password $storageAccountKey -Persistent $false
 
 if (!($result.status -eq "OK")) {
-    write-warning "Attempt to map path $MapPath failed."
+    Write-error "Attempt to map path $MapPath failed. Result was `n "
+    write-host $Error[0]
+    $result
     exit
 }
 

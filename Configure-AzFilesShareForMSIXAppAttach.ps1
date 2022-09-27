@@ -23,6 +23,8 @@
 # 19 May 2021   - Added check that shared-key access is enabled (if it's disabled it breaks the NFTS permissions code)
 # 14 Jul 2021   - Set default share permission for storage account to read-only instead of using IAM role assignments
 #                 (ref: https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-ad-ds-assign-permissions)
+# 28 Sep 2022   - Revamp to align with sister scripts to have fewer depenmdencies and add better prereq checks so that more runs are successful on the first try.
+#                 Improved (and more precise) ACL-setting logic
 
 ############################################################################
 # Required parameters - make sure you have all of this info ahead of time
@@ -32,40 +34,69 @@
 param(
     [Parameter(mandatory = $true)][string]$storageAccountName,  # The name of the storage account with the share
     [Parameter(mandatory = $true)][string]$shareName,           # The name of the share.  The share will be created if it does not exist.
-#    [Parameter(mandatory = $true)][string]$AppAttachSessionHostManagedIdAADGroupName,  # The name of an AD group containing the computer objects of the machines that need to use attached apps.  This group must be synchronized to AzureAD
-    [Parameter (Mandatory = $False, ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)][string]$appAttachADUsersGroup = "Domain Users",
-    [Parameter (Mandatory = $False, ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)][string]$appAttachADComputersGroup = "Domain Computers"
+    [Parameter (Mandatory = $False)][string]$appAttachADUsersGroup,
+    [Parameter (Mandatory = $False)][string]$appAttachADComputersGroup
     )
 
-# If the AD groups for users and/or computers are not specified then "Domain Users" and "Domain Computers" will be used
+# If the AD groups for users and/or computers are not specified then "Domain Users" and
+# "Domain Computers" will be used
 
 ##################################################################################
 
 
-# The following things must all be true for MSIX App Attach to work correctly:
 
-# - The VM's in the host pool must have system-managed identities enabled
-# - There must be a group in AAD containing the managed identities
-# - The target storage account must be configured for ADDS Authentication
-# 
+# Verify that the required Powershell modules are installed.  If not, install them.
+
+Write-Verbose ("Verifying that the necessary Azure Powershell modules are present.")
+$requiredModules = @("Az.Accounts", "Az.Storage", "Az.Resources")
+$requiredModules | ForEach-Object {
+    if (-not (Get-Module -Name $_ -ListAvailable)) {
+        Write-Verbose ("Module $_ is not installed.  Installing it now.")
+        Install-Module -Name $_ -Force -Scope CurrentUser
+    }
+}
 
 
-# Some sanity checks before we get started
+# The ActiveDirectory Module
+if (-not (Get-Module -Name ActiveDirectory -ListAvailable)) {
+    Write-Host "The ActiveDirectory module is not installed.  Installing with DISM.  This may take a few minutes."
+    $result = DISM.exe /Online /Get-Capabilities | select-string "Rsat.Active"
+
+    # The ActiveDirectory RSAT package has a dependency on the ServerManager package so we might need to install 
+    # ServerManager first.
+    
+    $ServerManagerCapability = "Rsat.ServerManager.Tools~~~~0.0.1.0"
+    $ActiveDirectoryRSatModuleCapability = "Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0"
+
+    if (-not (($result.toString().contains($ServerManagerCapability)) -and ($result.toString().contains($ActiveDirectoryRSatModuleCapability)))) {
+        Write-warning("The ActiveDirectory Powershell module is not present.")
+        $result = DISM.exe /Online /Get-CapabilityInfo /CapabilityName:$ServerManagerCapability
+        if ($result.contains("State : Installed")) {
+            Write-Host "Installing ActiveDirectory RSAT tools with DISM."
+            DISM.exe /Online /Add-Capability /CapabilityName:$ActiveDirectoryRSatModuleCapability /NoRestart
+        } else {
+            Write-Host "Installing ServerManager and ActiveDirectory RSAT tools with DISM."
+            DISM.exe /Online /Add-Capability /CapabilityName:$ServerManagerCapability /NoRestart
+            DISM.exe /Online /Add-Capability /CapabilityName:$ActiveDirectoryRSatModuleCapability /NoRestart
+        }
+    } else {
+        write-verbose "ActiveDirectory module is present."
+    }
+}
 
 # Make sure we are connected to Azure
-Write-Verbose ("Verifying that we are connected to Azure...")
 $currentContext = Get-AzContext -ErrorAction SilentlyContinue
 if ($null -eq $currentContext) {
-    write-warning ("You must connect to Azure with Connect-AzAccount before running this script.")
+    write-warning ("Please connect to Azure with Connect-AzAccount before running this script.")
     exit
 }
+
 
 # Share names for Azure Files must be all lowercase so force whatever the user entered to lowercase.
 # ref: https://docs.microsoft.com/en-us/rest/api/storageservices/Naming-and-Referencing-Shares--Directories--Files--and-Metadata
 $sharename = $sharename.ToLower()
 
 # Confirm that the storage account specified actually exists and that we can connect to it.
-# Yes, this method is slow but it means that we don't need to ask the user for the resource group name of the storage account
 write-verbose ("Verifying that $storageAccountName exists.  This will take a moment." )
 $storageAccount = Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $storageAccountName }
 if ($storageAccount) {
@@ -106,24 +137,45 @@ if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD
     exit 
 }
 
+# If the user didn't specify group names as parameters, make sure the default groups exist in AzureAD
+# Verify that the AAD group names provided actually exist and grab their object ID's for later.
+# Elevated Contributor role (admins)
+if (-not ($appAttachADUsersGroupObj = Get-ADGroup $appAttachADUsersGroup -ErrorAction SilentlyContinue)) {
+    Write-Warning ("Group `"$AppAttachADUsersGroup`" not found in AD.  This group must exist before running this script.")
+    exit
+} else {
+    Write-Verbose ("Group `"$AppAttachADUsersGroup`" found in AD.")
+}
+
+# Contributor role (normal users)
+if (-not ($appAttachADComputersGroupObj= Get-ADGroup $appAttachADComputersGroup -ErrorAction SilentlyContinue)) {
+    Write-Warning ("Group `"$appAttachADComputersGroup`" not found in AD.  This group must exist before running this script.")
+    exit
+} else {
+    Write-Verbose ("Group `"$appAttachADComputersGroup`" found in AD.")
+}
+
 
 # Check that the specified file share exists.  If it doesn't then create it.
-Write-verbose ("Setting storage context...")
-$storageContext = New-AzStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageAccountKey
+Write-verbose ("Setting storage context.")
+$storageContext = New-AzStorageContext -StorageAccountName $storageaccount.StorageAccountName `
+                        -StorageAccountKey (get-AzStorageAccountKey `
+                        -ResourceGroupName $storageAccount.resourcegroupname `
+                        -Name $storageAccount.StorageAccountName)[0].Value
 Write-Verbose ("Checking if share $sharename exists in storage account $storageAccountName...")
 if ($null -eq (get-AzStorageShare -Name $sharename -Context $storageContext -ErrorAction SilentlyContinue)) {
-    write-verbose ("File share $sharename does not exist.  Creating new share $sharename...")
+    write-verbose ("File share $sharename does not exist.  Creating...")
     New-AzStorageShare -Name $sharename -Context $storageContext
 } else {
-    write-verbose ("Share $sharename is present (OK)")
+    write-verbose ("Share $sharename is present.")
 }
 
 ###############################################################################################
 # Set default file share permission for this storage account to StorageFileDataSmbShareReader
 # This avoids having to do individual IAM role assignments which makes this script a lot simpler than it used to be
 
-$defaultPermission = "StorageFileDataSmbShareReader" # Default permission (IAM Role) for the share
-write-verbose ("Setting default File share permissions for "+ $storageaccount.storageAccountName + "to $defaultPermission")
+$defaultPermission = "StorageFileDataSmbShareContributor" # Default permission (IAM Role) for the share
+write-verbose ("Setting default File share permission for "+ $storageaccount.storageAccountName + "to $defaultPermission")
 $storageAccount = Set-AzStorageAccount -ResourceGroupName $storageAccount.ResourceGroupName `
                                        -AccountName $storageAccount.StorageAccountName `
                                        -DefaultSharePermission $defaultPermission
@@ -140,12 +192,11 @@ if (!($storageAccount.AzureFilesIdentityBasedAuth.DefaultSharePermission -eq $de
 # Update NTFS permissions so the AD objects can access the share
 Write-Verbose ("Setting NTFS permissions for share $shareName...")
 
-
 # Find an unused drive letter to map to the file share
 $unusedDriveLetters = [Char[]](90..65) | Where-Object { (Test-Path "${_}:\") -eq $false }
 $driveLetter = $unusedDriveLetters[0] + ":"  # using the first one
 
-$MapPath = "\\$endpointfqdn\"+$sharename  # The complete UNC path to the share
+$MapPath = "\\$endpointFqdn\"+$sharename  # The complete UNC path to the share
 
 # Get the storage account key 
 Write-Verbose ("Getting storage account key for $storageAccountName...")
@@ -155,28 +206,58 @@ if ($null -eq $storageAccountKey) {
     exit 
 }
 
+# Check if we already have a connection open to this file share (unlikely but possible)
+Write-Verbose ("Making sure we're not already connected to $MapPath...")
+if ((Get-SmbMapping).RemotePath -contains $MapPath) {
+    Write-Warning ("There is already a connection open to $MapPath.  Please remove the connection and try again.")
+    exit 
+}
+
 write-verbose ("Mounting $MapPath...")
-$result = new-smbmapping -LocalPath $driveLetter -RemotePath $MapPath -UserName $storageAccountName -Password $storageAccountKey -Persistent $false
+$result = New-SmbMapping -LocalPath $driveLetter -RemotePath $MapPath -UserName $storageAccountName -Password $storageAccountKey -Persistent $false
 
 if (!($result.status -eq "OK")) {
     write-warning "Attempt to mount $MapPath failed."
     exit 
 }
 
-Write-verbose ("Successfully mounted $MapPath as drive $drive")
+Write-verbose ("Successfully mounted $MapPath as drive $driveLetter")
 
-write-verbose ("Adding `"$appAttachADUsersGroup`" to NTFS ACL on the file share (ReadAndExecute)...")
-$acl = Get-Acl $path
+Write-Verbose ("Updating ACL for $driveLetter...")
+
+$acl = Get-Acl $driveletter
+
+# remove write perms for Authenticated Users
+# This works by taking the well-known SID for this special group and back-translating it to an identity object 
+# which we can use to strip its reference from the ACL.
+Write-Verbose ("... Removing Authenticated Users")
+$authenticatedUsersWellKnownSID = "S-1-5-11"  # the well-known SID for "Authenticated Users"
+$principal = New-Object System.Security.Principal.SecurityIdentifier($authenticatedUsersWellKnownSID)
+$identityReference = $principal.Translate([System.Security.Principal.NTAccount])
+$acl.purgeAccessRules($identityReference)
+
+# remove write perms for the built-in "Users" group
+Write-Verbose ("... Removing BUILTIN\Users")
+$builtinUsersWellKnownSID = "S-1-5-32-545"  # the well-known SID for builtin\users
+$principal = New-Object System.Security.Principal.SecurityIdentifier($builtinUsersWellKnownSID)
+$identityReference = $principal.Translate([System.Security.Principal.NTAccount])
+$acl.purgeAccessRules($identityReference)
+
+write-verbose ("... Adding `"$appAttachADUsersGroup`" (ReadAndExecute)")
+$appAttachADUsersGroup = "KENTOSO\All AVD Users"
 $rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $appAttachADUsersGroup, "ReadAndExecute", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
 $acl.SetAccessRule($rule)
-$result = $acl | Set-Acl -Path $path
 
-write-verbose ("Adding `"$appAttachADComputersGroup`" to NTFS ACL on the file share (ReadAndExecute)...")
-$acl = Get-Acl $path
+write-verbose ("... Adding `"$appAttachADComputersGroup`" (ReadAndExecute)")
+$appAttachADComputersGroup = "KENTOSO\MSIX App Attach Computers"
 $rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $appAttachADComputersGroup, "ReadAndExecute", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
 $acl.SetAccessRule($rule)
-$result = $acl | Set-Acl -Path $path
 
+# Apply the new ACL
+Write-Verbose ("Applying new ACL to $driveLetter...")
+$acl | Set-Acl -Path $driveLetter
+
+# Dismount the drive
 Write-Verbose ("Removing drive mapping...")
 Remove-SmbMapping -LocalPath $driveLetter -Force
 
