@@ -2,13 +2,14 @@
 
 This script works against an Azure storage account to configure an [Azure Files](https://azure.microsoft.com/en-us/services/storage/files/) share for use with [FSLogix Profile Containers](https://docs.microsoft.com/en-us/azure/virtual-desktop/create-file-share) by applying the necessary IAM roles and NTFS permissions.
 
-
 ## **Prerequisites**
 
 The following things should be true of the system that you are using to run the script:
 * PowerShell 7 is required.  This is not installed by default in most cases.  You can download the current version of PowerShell for Windows from [here](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows).
 * The system running the script must have network visibility to the Azure Files share on port 445 (SMB).
 * The script uses a few pieces of [Az PowerShell module](https://learn.microsoft.com/en-us/powershell/azure/new-azureps-module-az): `Az.Accounts`, `Az.Resources` and `Az.Storage`.  If these are not present in the local system they will be installed automatically with scope `CurrentUser`.
+
+The storage account should already be joined to AD DS or AADDS. You can use [this script](../Configure-AzFilesShareForADDSAuthn).
 
 ### How to use
 
