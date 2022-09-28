@@ -47,17 +47,17 @@ The name of the storage account to configure.  The storage account must exist an
 
 The name of the file share to configure.  If the share does not exist, it will be created.  If the share name provided has mixed-case characters it will be converted to all-lowercase as required by Azure Files.
 
-.PARAMETER ShareAdminGroupName
+.PARAMETER shareAdminGroupName
 
 The name of an Azure AD group which will be granted full control of the share.  This group must already exist in Azure AD and will be assigned the "Storage File Data SMB Share Elevated Contributor" role on the specificd share.
 
-.PARAMETER ShareUserGroupName
+.PARAMETER shareUserGroupName
 
 The name of an Azure AD group which will be granted basic read/write access to the share.  This group must already exist in Azure AD and will be assigned the IAM role "Storage File Data SMB Share Contributor" on the specified share.
 
 .EXAMPLE
 
-    .configure-AzFilesShareForFSLogixProfileContainers.ps1 -storageAccountName "myaccount" -profileShareName "fslogix" -ShareAdminGroupName "FSLogixAdmins" -ShareUserGroupName "FSLogixUsers"
+    .configure-AzFilesShareForFSLogixProfileContainers.ps1 -storageAccountName "myaccount" -profileShareName "fslogix" -shareAdminGroupName "FSLogixAdmins" -shareUserGroupName "FSLogixUsers"
 
 
 .LINK
@@ -71,8 +71,8 @@ The name of an Azure AD group which will be granted basic read/write access to t
 param(
     [Parameter(mandatory = $true)][ValidateLength(1,15)][string]$storageAccountName,     # The name of the storage account with the share
     [Parameter(mandatory = $true)][string]$profileShareName,       # The name of the profiles share.  The share will be created if it doesn't exist.
-    [Parameter(mandatory = $true)][string]$ShareAdminGroupName,    # the name of an AD group which will have elevated access to the profile share
-    [Parameter(mandatory = $true)][string]$ShareUserGroupName      # the name of an AD group which will have normal access to the profile share
+    [Parameter(mandatory = $true)][string]$shareAdminGroupName,    # the name of an AD group which will have elevated access to the profile share
+    [Parameter(mandatory = $true)][string]$shareUserGroupName      # the name of an AD group which will have normal access to the profile share
 )
 
 # Verify that the Az modules we need are installed.  If not, install any midding ones.
@@ -160,11 +160,11 @@ if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD
 
 # Verify that the AAD group names provided actually exist and grab their object ID's for later.
 # Elevated Contributor role (admins)
-if (-not ($elevatedContributorGroupObjectId = (Get-AzADGroup -DisplayName $ShareAdminGroupName -ErrorAction SilentlyContinue).Id)) {
-    Write-Warning ("Group $ShareAdminGroupName does not exist.  Please create this group before running this script.")
+if (-not ($elevatedContributorGroupObjectId = (Get-AzADGroup -DisplayName $shareAdminGroupName -ErrorAction SilentlyContinue).Id)) {
+    Write-Warning ("Group $shareAdminGroupName does not exist.  Please create this group before running this script.")
     exit
 } else {
-    Write-Verbose ("Group $ShareAdminGroupName exists with object ID $elevatedContributorGroupObjectId.")
+    Write-Verbose ("Group $shareAdminGroupName exists with object ID $elevatedContributorGroupObjectId.")
 }
 
 # Contributor role (normal users)
@@ -212,7 +212,7 @@ $elevatedContributorRoleAssignments = Get-AzRoleAssignment -scope $scope -RoleDe
 if (($null -ne $elevatedContributorRoleAssignments) -and ($elevatedContributorRoleAssignments.ObjectID.contains($elevatedContributorGroupObjectId))) {
     Write-Verbose ("Role assignment $ElevatedContributorRoleDefinitionName already exists for group $shareAdminGroupName.")
 } else {
-    Write-Verbose ("Assigning role $ElevatedContributorRoleDefinitionName to group $ShareAdminGroupName.")
+    Write-Verbose ("Assigning role $ElevatedContributorRoleDefinitionName to group $shareAdminGroupName.")
     New-AzRoleAssignment -ObjectId $elevatedContributorGroupObjectId -RoleDefinitionName $ElevatedContributorRoleDefinitionName -Scope $scope | out-null
 }
 
