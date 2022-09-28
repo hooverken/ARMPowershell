@@ -1,5 +1,3 @@
-#Requires -PSEdition Core
-
 # Configure-AzFilesPermissionsForFSLogixProfileContainers.ps1
 # by Ken Hoover <ken dot hoover at microsoft dotcom>
 # Original version April 2021
