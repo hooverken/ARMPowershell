@@ -31,6 +31,7 @@
 #               Installs RSAT tools if not present (needed for ActiveDirectory module)
 #               Simplified logic in a few places.
 #               Removed isGovCloud parameter since we can set the SPN using attributes of the storage account
+# 29 Sep 2022 : Adapted SPN logic to work with any cloud environment (not just AzureCloud)
 
 <#
 .SYNOPSIS

@@ -21,6 +21,8 @@
 #               Storage account name length validated (finally) at the parameter level
 #               Improved checking of runtime prerequisites
 #               Improved handling of IAM role assignments and drive mapping
+# 29 Sep 2022 : (BUGFIX) NTFS permissions were not properly set for the Profile share's NTFS ACL (Issue #6)
+#               Gracefully deal with pre-existing SMB mappings to same server - unlikely but possible, especially when testing
 
 <#
 .SYNOPSIS
@@ -192,7 +194,7 @@ $storageContext = New-AzStorageContext -StorageAccountName $storageaccount.Stora
 Write-Verbose ("Checking if share $profileShareName exists in storage account " + $storageAccount.StorageAccountName)
 if (-not (get-AzStorageShare -Name $profileShareName -Context $storageContext -ErrorAction SilentlyContinue)) {
     write-verbose ("File share $profileShareName does not exist.  Creating new share.")
-    New-AzStorageShare -Name $profileShareName -Context $storageContext
+    New-AzStorageShare -Name $profileShareName -Context $storageContext | out-null
 } else {
     write-verbose ("Share $profileShareName is present.")
 }
@@ -212,15 +214,15 @@ $elevatedContributorRoleAssignments = Get-AzRoleAssignment -scope $scope -RoleDe
 if (($null -ne $elevatedContributorRoleAssignments) -and ($elevatedContributorRoleAssignments.ObjectID.contains($elevatedContributorGroupObjectId))) {
     Write-Verbose ("Role assignment $ElevatedContributorRoleDefinitionName already exists for group $shareAdminGroupName.")
 } else {
-    Write-Verbose ("Assigning role $ElevatedContributorRoleDefinitionName to group $ShareAdminGroupName.")
+    Write-Verbose ("Assigning role $ElevatedContributorRoleDefinitionName to group `"$ShareAdminGroupName`".")
     New-AzRoleAssignment -ObjectId $elevatedContributorGroupObjectId -RoleDefinitionName $ElevatedContributorRoleDefinitionName -Scope $scope | out-null
 }
 
 $contributorRoleAssignments = Get-AzRoleAssignment -scope $scope -RoleDefinitionName $ContributorRoleDefinitionName
 if (($null -ne $contributorRoleAssignments) -and ($contributorRoleAssignments.ObjectID.contains($contributorGroupObjectId))) {
-    Write-Verbose ("Role assignment $ContributorRoleDefinitionName already exists for group $shareUserGroupName.")
+    Write-Verbose ("Role assignment `"$ContributorRoleDefinitionName`" already exists for group `"$shareUserGroupName`".")
 } else {
-    Write-Verbose ("Assigning role $ContributorRoleDefinitionName to group $shareUserGroupName.")
+    Write-Verbose ("Assigning role `"$ContributorRoleDefinitionName`" to group `"$shareUserGroupName`".")
     New-AzRoleAssignment -ObjectId $contributorGroupObjectId -RoleDefinitionName $ContributorRoleDefinitionName -Scope $scope | Out-Null
 }
 
@@ -231,12 +233,21 @@ $ShareName		= $profileShareName
 $storageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $storageAccount.ResourceGroupName `
                                               -Name $storageAccount.StorageAccountName).value[0]
 
-# The FQDN for the storage account is different in gov vs commercial cloud.
-if ($isGovCloud) {
-    $MapPath = "\\"+$storageAccountName+".file.core.usgovcloudapi.net\"+$ShareName
-} else {
-    $MapPath = "\\"+$storageAccountName+".file.core.windows.net\"+$ShareName
+
+# Get the primary file endpoint for this storage account.
+$result = ($storageaccount.PrimaryEndpoints.file -match "//(.*)/")
+$fileEndpoint = $matches[1]
+
+# Check if we already have a connection open to the same destination (even if it's a different share).  If so, drop the connection.
+Get-SmbMapping | ForEach-Object {
+    Write-Verbose ("Checking if there are any existing drive mappings to the same endpoint.")
+    if ($_.RemotePath.contains($fileEndpoint)) {
+        Write-Verbose ("Disconnecting existing SMB mount to " + $_.RemotePath)
+        Remove-SmbMapping -RemotePath $_.RemotePath -Force
+    }
 }
+
+$MapPath = "\\"+$endpointFqdn + "\" +$ShareName  # should work foir all clouds
 
 # Find an unused drive letter to map to the file share
 $unusedDriveLetters = [Char[]](90..65) | Where-Object { (Test-Path "${_}:\") -eq $false }
@@ -257,22 +268,40 @@ Write-verbose ("Successfully mounted $MapPath as drive $driveLetter")
 # Get the NTFS ACL on the root of the shared volume
 $acl = Get-Acl $driveLetter
 
-# from https://blog.netwrix.com/2018/04/18/how-to-manage-file-system-acls-with-powershell-scripts/
-# Users / Modify / This folder only
-write-verbose ("Setting Users (modify, this folder only).")
-$acl = Get-Acl $driveLetter
+# IMPORTANT:  Theis script sets permissions to match the suggested model at this link
+# https://learn.microsoft.com/en-us/fslogix/fslogix-storage-config-ht
+
+# As noted on the linked page above, there are lots of ways to do NTFS-level security for FSLogix Profiles.
+# The general idea is that you want to allow for users to create their own profiles, but you want 
+# to make sure that people don't have the ability to touch VHD's created by other users while 
+# preserving the rights of Admins to manage the share.
+
+Write-Verbose ("... Removing `"NT AUTHORITY\Authenticated Users`"" )
+$authenticatedUsersWellKnownSID = "S-1-5-11"  # the well-known SID for "Authenticated Users"
+$principal = New-Object System.Security.Principal.SecurityIdentifier($authenticatedUsersWellKnownSID)
+$identityReference = $principal.Translate([System.Security.Principal.NTAccount])
+$acl.purgeAccessRules($identityReference)
+
+# remove write perms for the built-in "Users" group
+Write-Verbose ("... Removing BUILTIN\Users")
+$builtinUsersWellKnownSID = "S-1-5-32-545"  # the well-known SID for builtin\users
+$principal = New-Object System.Security.Principal.SecurityIdentifier($builtinUsersWellKnownSID)
+$identityReference = $principal.Translate([System.Security.Principal.NTAccount])
+$acl.purgeAccessRules($identityReference)
+
+write-verbose ("... Setting new rule for BUILTIN\Users (modify, this folder only).")
 $rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList "Users", "Modify,Synchronize", "None", "None", "Allow"
 $acl.SetAccessRule($rule)
-$result = $acl | Set-Acl -Path $driveLetter
 
 # CREATOR OWNER / Subfolders and Files Only / Modify
-write-verbose ("Setting CREATOR OWNER (modify, subfolders and files only).")
-$acl = Get-Acl $driveLetter
+write-verbose ("... Setting CREATOR OWNER (modify, subfolders and files only).")
 $rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList "CREATOR OWNER", "Modify,Synchronize", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
 $acl.SetAccessRule($rule)
+
+# we're done messing with the ACL so we can write it back to the volume
 $result = $acl | Set-Acl -Path $driveLetter
 
 Write-Verbose ("Disconnecting from file share.")
-Remove-SmbMapping -LocalPath $driveLetter -Force
+Remove-SmbMapping -LocalPath $driveLetter -Force | out-null
 
 Write-Verbose ("Execution complete.")

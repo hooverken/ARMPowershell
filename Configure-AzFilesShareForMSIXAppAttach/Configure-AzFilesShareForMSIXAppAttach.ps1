@@ -36,7 +36,7 @@ param(
     [Parameter(mandatory = $true)][string]$shareName,           # The name of the share.  The share will be created if it does not exist.
     [Parameter (Mandatory = $False)][string]$appAttachADUsersGroup,
     [Parameter (Mandatory = $False)][string]$appAttachADComputersGroup
-    )
+)
 
 # If the AD groups for users and/or computers are not specified then "Domain Users" and
 # "Domain Computers" will be used
@@ -155,7 +155,6 @@ if (-not ($appAttachADComputersGroupObj= Get-ADGroup $appAttachADComputersGroup 
     Write-Verbose ("Group `"$appAttachADComputersGroup`" found in AD.")
 }
 
-
 # Check that the specified file share exists.  If it doesn't then create it.
 Write-verbose ("Setting storage context.")
 $storageContext = New-AzStorageContext -StorageAccountName $storageaccount.StorageAccountName `
@@ -206,11 +205,14 @@ if ($null -eq $storageAccountKey) {
     exit 
 }
 
-# Check if we already have a connection open to this file share (unlikely but possible)
-Write-Verbose ("Making sure we're not already connected to $MapPath...")
-if ((Get-SmbMapping).RemotePath -contains $MapPath) {
-    Write-Warning ("There is already a connection open to $MapPath.  Please remove the connection and try again.")
-    exit 
+# Check if we already have a connection open to the same destination (even if it's a different share).  
+# If so, drop the connection.
+Get-SmbMapping | ForEach-Object {
+    Write-Verbose ("Checking if there are any existing drive mappings to the same endpoint.")
+    if ($_.RemotePath.contains($endpointFqdn)) {
+        Write-Verbose ("Disconnecting existing SMB mount to "+ $_.RemotePath)
+        Remove-SmbMapping -RemotePath $_.RemotePath -Force
+    }
 }
 
 write-verbose ("Mounting $MapPath...")
@@ -230,7 +232,7 @@ $acl = Get-Acl $driveletter
 # remove write perms for Authenticated Users
 # This works by taking the well-known SID for this special group and back-translating it to an identity object 
 # which we can use to strip its reference from the ACL.
-Write-Verbose ("... Removing Authenticated Users")
+Write-Verbose ("... Removing `"NT AUTHORITY\Authenticated Users`"" )
 $authenticatedUsersWellKnownSID = "S-1-5-11"  # the well-known SID for "Authenticated Users"
 $principal = New-Object System.Security.Principal.SecurityIdentifier($authenticatedUsersWellKnownSID)
 $identityReference = $principal.Translate([System.Security.Principal.NTAccount])
@@ -243,11 +245,13 @@ $principal = New-Object System.Security.Principal.SecurityIdentifier($builtinUse
 $identityReference = $principal.Translate([System.Security.Principal.NTAccount])
 $acl.purgeAccessRules($identityReference)
 
+# Add the AAD group for elevated users
 write-verbose ("... Adding `"$appAttachADUsersGroup`" (ReadAndExecute)")
 $appAttachADUsersGroup = "KENTOSO\All AVD Users"
 $rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $appAttachADUsersGroup, "ReadAndExecute", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
 $acl.SetAccessRule($rule)
 
+# Add the AAD group for normal users
 write-verbose ("... Adding `"$appAttachADComputersGroup`" (ReadAndExecute)")
 $appAttachADComputersGroup = "KENTOSO\MSIX App Attach Computers"
 $rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $appAttachADComputersGroup, "ReadAndExecute", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
