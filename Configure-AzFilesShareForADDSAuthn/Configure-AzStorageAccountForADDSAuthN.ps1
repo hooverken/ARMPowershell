@@ -32,8 +32,9 @@
 #               Simplified logic in a few places.
 #               Removed isGovCloud parameter since we can set the SPN using attributes of the storage account
 # 29 Sep 2022 : Adapted SPN logic to work with any cloud environment (not just AzureCloud)
-# 30 Sep 2022 : Require user to provide a credential to talk to AD rather than assuming that we're running
-#               as a user with access to do AD stuff.  (new mandatory parameter ADUpdateCredential)
+# 30 Sep 2022 : Add support for cases where the computer object already exists in the target OU (Issue #7)
+#               Require user to provide a credential (and domain name) to talk to AD rather than assuming 
+#                 that we're running as a user with access to do the AD work
 
 <#
 .SYNOPSIS
