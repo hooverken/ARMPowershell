@@ -4,7 +4,7 @@ This script configures an Azure storage account to use AD Domain Services (ADDS)
 
 This is intended for use in place of the [AzFilesHybrid Powershell module](https://github.com/Azure-Samples/azure-files-samples/releases) which I've found to be clunky and unreliable.  The script works by automating the manual approach described in the "Option 2" steps in the link above to configure the storage account.
 
-This script will create a computer object in the local AD to represent the storage account for Kerberos authentication.  The computer object will have the same name as the storage account.  If the computer account already exists in the listed OU then it wil be updated.  **Do not delete this object** or you will break the ADDS authentication.  You must provide credentiaisl of a user with sufficient privileges and the DN of the OU for the computer object as parameters to the script.
+This script will create a computer object in the local AD to represent the storage account for Kerberos authentication.  The computer object will have the same name as the storage account.  If the computer account already exists in the listed OU then it wil be updated.  **Do not delete this object** or you will break the ADDS authentication.  You must provide credentials of a user with sufficient privileges and the DN of the OU for the computer object as parameters to the script.
 
 This was inspired by some work by John Kelbley, a member of the AVD GBB team at Microsoft.
 
