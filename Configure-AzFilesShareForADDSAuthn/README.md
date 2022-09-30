@@ -4,9 +4,9 @@ This script configures an Azure storage account to use AD Domain Services (ADDS)
 
 This is intended for use in place of the [AzFilesHybrid Powershell module](https://github.com/Azure-Samples/azure-files-samples/releases) which I've found to be clunky and unreliable.  The script works by automating the manual approach described in the "Option 2" steps in the link above to configure the storage account.
 
-This script will create a computer object in the local AD to represent the storage account for Kerberos authentication.  The computer object will have the same name as the storage account.  **Do not delete this object** or you will break the ADDS authentication.  You must provide the DN of the OU for the computer object as a parameter to the script.
+This script will create a computer object in the local AD to represent the storage account for Kerberos authentication.  The computer object will have the same name as the storage account.  If the computer account already exists in the listed OU then it wil be updated.  **Do not delete this object** or you will break the ADDS authentication.  You must provide credentiaisl of a user with sufficient privileges and the DN of the OU for the computer object as parameters to the script.
 
-This is based on prior work by John Kelbley, a member of the AVD GBB team at Microsoft.
+This was inspired by some work by John Kelbley, a member of the AVD GBB team at Microsoft.
 
 ### **Prerequisites**
 
@@ -22,7 +22,7 @@ This is based on prior work by John Kelbley, a member of the AVD GBB team at Mic
     * **Credentials** for an AD user that has access to create/update computer objects in the target DN
 2. Log in as a domain user who has permission to add a computer to the specified OU.
 3. Connect to Azure with `Connect-AzAccount` as a user with permission to configure the target storage account
-4. Run the script using a command line like this one<br> `Configure-AzStorageAccountForADDSAuthN.ps1 -storageAccountName "myStorageAccount" -ADOuDistinguishedName "OU=MyOU,DC=MyDomain,DC=local" -Verbose`
+4. Run the script using a command line like this one<br> `Configure-AzStorageAccountForADDSAuthN.ps1 -storageAccountName "myStorageAccount" -ADOuDistinguishedName "OU=MyOU,DC=MyDomain,DC=local" -Credential $cred -ADDomainFqdn "ad.contoso.com" -Verbose`
 
 Using the `-Verbose` parameter will show detailed progress of the script as it runs.
 
