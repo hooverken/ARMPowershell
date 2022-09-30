@@ -19,10 +19,9 @@ This was inspired by some work by John Kelbley, a member of the AVD GBB team at 
 1. Gather the following information:
     * The **name of the storage account** to configure
     * The full **DistinguishedName (DN)** of the OU to create the new computer object in.
-    * **Credentials** for an AD user that has access to create/update computer objects in the target DN
-2. Log in as a domain user who has permission to add a computer to the specified OU.
-3. Connect to Azure with `Connect-AzAccount` as a user with permission to configure the target storage account
-4. Run the script using a command line like this one<br> `Configure-AzStorageAccountForADDSAuthN.ps1 -storageAccountName "myStorageAccount" -ADOuDistinguishedName "OU=MyOU,DC=MyDomain,DC=local" -Credential $cred -ADDomainFqdn "ad.contoso.com" -Verbose`
+    * **Credentials** for an AD user that has access to create computer objects (or update the computer object if it already   exists) in the target OU
+2. Connect to Azure with `Connect-AzAccount` as a user with permission to configure the target storage account
+3. Run the script using a command line like this one<br> `Configure-AzStorageAccountForADDSAuthN.ps1 -storageAccountName "myStorageAccount" -ADOuDistinguishedName "OU=MyOU,DC=MyDomain,DC=local" -Credential $cred -ADDomainFqdn "ad.contoso.com" -Verbose`
 
 Using the `-Verbose` parameter will show detailed progress of the script as it runs.
 
