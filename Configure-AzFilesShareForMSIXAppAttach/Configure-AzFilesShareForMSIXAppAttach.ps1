@@ -23,8 +23,9 @@
 # 19 May 2021   - Added check that shared-key access is enabled (if it's disabled it breaks the NFTS permissions code)
 # 14 Jul 2021   - Set default share permission for storage account to read-only instead of using IAM role assignments
 #                 (ref: https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-ad-ds-assign-permissions)
-# 28 Sep 2022   - Revamp to align with sister scripts to have fewer depenmdencies and add better prereq checks so that more runs are successful on the first try.
+# 04 Oct 2022   - Revamp to align with sister scripts to have fewer depenmdencies and add better prereq checks so that more runs are successful on the first try.
 #                 Improved (and more precise) ACL-setting logic
+#                 Improved drive-mapping logic
 
 ############################################################################
 # Required parameters - make sure you have all of this info ahead of time
@@ -34,12 +35,10 @@
 param(
     [Parameter(mandatory = $true)][string]$storageAccountName,  # The name of the storage account with the share
     [Parameter(mandatory = $true)][string]$shareName,           # The name of the share.  The share will be created if it does not exist.
-    [Parameter (Mandatory = $False)][string]$appAttachADUsersGroup,
-    [Parameter (Mandatory = $False)][string]$appAttachADComputersGroup
-)
-
-# If the AD groups for users and/or computers are not specified then "Domain Users" and
-# "Domain Computers" will be used
+    [Parameter (Mandatory = $true)][string]$appAttachADUsersGroup,
+    [Parameter (Mandatory = $true)][string]$appAttachADComputersGroup,
+    [Parameter (Mandatory = $true)][PSCredential]$ADCredential  # Credentials of a user that can read AD group info (doesn't need admin)
+)   
 
 ##################################################################################
 
@@ -137,18 +136,16 @@ if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD
     exit 
 }
 
-# If the user didn't specify group names as parameters, make sure the default groups exist in AzureAD
-# Verify that the AAD group names provided actually exist and grab their object ID's for later.
-# Elevated Contributor role (admins)
-if (-not ($appAttachADUsersGroupObj = Get-ADGroup $appAttachADUsersGroup -ErrorAction SilentlyContinue)) {
+# The AD group containing users that will nbe using MSIX-app-attached app;lications
+if (-not ($appAttachADUsersGroupObj = Get-ADGroup $appAttachADUsersGroup -Credential $ADCredential)) {
     Write-Warning ("Group `"$AppAttachADUsersGroup`" not found in AD.  This group must exist before running this script.")
     exit
 } else {
     Write-Verbose ("Group `"$AppAttachADUsersGroup`" found in AD.")
 }
 
-# Contributor role (normal users)
-if (-not ($appAttachADComputersGroupObj= Get-ADGroup $appAttachADComputersGroup -ErrorAction SilentlyContinue)) {
+# The AD group containing the computer objects for the AVD session hosts that will use MISX app attach
+if (-not ($appAttachADComputersGroupObj= Get-ADGroup $appAttachADComputersGroup -Credential $ADCredential)) {
     Write-Warning ("Group `"$appAttachADComputersGroup`" not found in AD.  This group must exist before running this script.")
     exit
 } else {
@@ -163,10 +160,10 @@ $storageContext = New-AzStorageContext -StorageAccountName $storageaccount.Stora
                         -Name $storageAccount.StorageAccountName)[0].Value
 Write-Verbose ("Checking if share $sharename exists in storage account $storageAccountName...")
 if ($null -eq (get-AzStorageShare -Name $sharename -Context $storageContext -ErrorAction SilentlyContinue)) {
-    write-verbose ("File share $sharename does not exist.  Creating...")
+    write-verbose ("File share `"$sharename`" does not exist.  Creating...")
     New-AzStorageShare -Name $sharename -Context $storageContext
 } else {
-    write-verbose ("Share $sharename is present.")
+    write-verbose ("Share `"$sharename`" is present on storage account `"$storageAccountName`".")
 }
 
 ###############################################################################################
@@ -192,8 +189,18 @@ if (!($storageAccount.AzureFilesIdentityBasedAuth.DefaultSharePermission -eq $de
 Write-Verbose ("Setting NTFS permissions for share $shareName...")
 
 # Find an unused drive letter to map to the file share
-$unusedDriveLetters = [Char[]](90..65) | Where-Object { (Test-Path "${_}:\") -eq $false }
+$unusedDriveLetters = [Char[]](90..65) | Where-Object { -not (((Get-SmbMapping).LocalPath -eq  "${_}:" ) -or (Test-Path "${_}:\")) }
 $driveLetter = $unusedDriveLetters[0] + ":"  # using the first one
+
+# Check if we already have a connection open to the same destination (even if it's a different share).  
+# If so, drop the connection.
+Get-SmbMapping | ForEach-Object {
+    Write-Verbose ("Checking if there are any existing drive mappings to the same endpoint.")
+    if ($_.RemotePath.contains($endpointFqdn)) {
+        Write-Verbose ("Disconnecting existing SMB mount to "+ $_.RemotePath)
+        Remove-SmbMapping -RemotePath $_.RemotePath -Force
+    }
+}
 
 $MapPath = "\\$endpointFqdn\"+$sharename  # The complete UNC path to the share
 
@@ -205,15 +212,7 @@ if ($null -eq $storageAccountKey) {
     exit 
 }
 
-# Check if we already have a connection open to the same destination (even if it's a different share).  
-# If so, drop the connection.
-Get-SmbMapping | ForEach-Object {
-    Write-Verbose ("Checking if there are any existing drive mappings to the same endpoint.")
-    if ($_.RemotePath.contains($endpointFqdn)) {
-        Write-Verbose ("Disconnecting existing SMB mount to "+ $_.RemotePath)
-        Remove-SmbMapping -RemotePath $_.RemotePath -Force
-    }
-}
+
 
 write-verbose ("Mounting $MapPath...")
 $result = New-SmbMapping -LocalPath $driveLetter -RemotePath $MapPath -UserName $storageAccountName -Password $storageAccountKey -Persistent $false
@@ -247,13 +246,11 @@ $acl.purgeAccessRules($identityReference)
 
 # Add the AAD group for elevated users
 write-verbose ("... Adding `"$appAttachADUsersGroup`" (ReadAndExecute)")
-$appAttachADUsersGroup = "KENTOSO\All AVD Users"
 $rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $appAttachADUsersGroup, "ReadAndExecute", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
 $acl.SetAccessRule($rule)
 
 # Add the AAD group for normal users
 write-verbose ("... Adding `"$appAttachADComputersGroup`" (ReadAndExecute)")
-$appAttachADComputersGroup = "KENTOSO\MSIX App Attach Computers"
 $rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $appAttachADComputersGroup, "ReadAndExecute", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
 $acl.SetAccessRule($rule)
 
