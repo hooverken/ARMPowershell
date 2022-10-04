@@ -39,4 +39,4 @@ The name of an Active directory group which contains users that should have priv
 ### **ShareUserGroupName** (string)
 The name of an Active directory group which contains end users that will have their profiles stored on the Azure Files share.  This group must be synced to Azure AD.  It will be assigned IAM role [Storage File Data SMB Share Contributor](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-file-data-smb-share-contributor)
 
-![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/Configure-AzFilesShareForFSLogixProfileContainers.PNG)
+![Screenshot](https://github.com/hooverken/ARMPowershell/blob/main/Configure-AzFilesShareForFSLogixProfileContainers/Configure-AzFilesShareForFSLogixProfileContainers.png?raw=true)
