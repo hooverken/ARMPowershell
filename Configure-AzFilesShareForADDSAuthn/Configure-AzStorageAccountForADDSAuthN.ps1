@@ -216,8 +216,8 @@ if ($OUlist.distinguishedName -contains $ADOuDistinguishedName) {
                      -Credential $ADUpdateCredential `
                      -Confirm:$false `
                      -ErrorAction Stop
-        Write-Verbose ("Updating exiting computer object $storageAccountName in domain $domainName.")
-        $result = Set-ADComputer -Identity ("CN=$storageAccountName" + "," + $ADOuDistinguishedName) `
+        Write-Verbose ("Updating existing computer object $storageAccountName in domain $domainName.")
+        $result = Set-ADComputer -Identity ("CN=$storageAccountName,$ADOuDistinguishedName") `
             -Description "DO NOT DELETE - Azure File Share Authentication Account" `
             -ServicePrincipalNames @{Add=$SPN} `
             -PasswordNeverExpires $true `
