@@ -6,7 +6,7 @@
 # Based on work by John Kelbley <johnkel at Microsoft dotcom>
 
 # initial release April 2021
-# last update Sept 2022
+# last update Oct 2022
 
 ###############################################################################################################
 #  This is the "Manual" process to configure AD authentication for Azure Files, automated!
@@ -23,7 +23,7 @@
 ###############################################################################################################
 #
 # CHANGELOG
-# 13 MAY 2021 : Check for AD enabled status before doing anything and removed storageAccountRGName variable
+# 13 May 2021 : Check for AD enabled status before doing anything and removed storageAccountRGName variable
 # 21 Sep 2022 : Powershell 7 now required
 #               storage account length constraint enforced by parameter validation
 #               Reduced number of modules required to function (Az.Accounts, Az.Resources, Az.Storage)
@@ -35,6 +35,9 @@
 # 30 Sep 2022 : Add support for cases where the computer object already exists in the target OU (Issue #7)
 #               Require user to provide a credential (and domain name) to talk to AD rather than assuming 
 #                 that we're running as a user with access to do the AD work
+# 18 Oct 2022 : Prompt for connection to Azure if Get-AzContext fails so we don't confuse the user
+#                 by making them re-run the script, especially if the necessary PS modules had to be
+#                 installed.
 
 <#
 .SYNOPSIS
@@ -45,13 +48,7 @@ This script configures an Azure storage account for authentication using ADDS Au
 
 This script configures an Azure storage account for authentication using ADDS Authentication  
     
-To use it, follow these steps:
-
-1. Log into a workstation which is joined to the same AD domain that you want the storage account to use for authentication using an AD user with permission to add a computer object to the desired OU
-
-2. Connect to Azure using Connect-AzAccount and use Select-AzSubscription to switch context to the subscription where the storage account is located.
-
-3. Run this script, providing the storage account name and the DN of the OU to create the new computer object in as parameters.
+See https://github.com/hooverken/ARMPowershell/tree/main/Configure-AzFilesShareForADDSAuthn for information on how it works, prerequisites and usage information.
 
 .PARAMETER storageAccountName
 
@@ -65,20 +62,16 @@ The fully qualified domain name of the AD domain to use for authentication.
 
 The full distinguished name (DN) of the OU in AD where the computer account will be created, such as "OU=MyOU,DC=MyDomain,DC=local"
 
-.PARAMETER ADUpdateCredential
+.PARAMETER Credential
 
 A PSCredential object for a user with rights to add/update the computer account in the OU specified by ADOUDistinguishedName.  This user must be able to add a computer account to the OU specified by ADOUDistinguishedName.
 
 .EXAMPLE
 
-    .\Configure-AzStorageAccountForADDSAuthN.ps1 -storageAccountName "myStorageAccount" -ADOUDistinguishedName "OU=MyOU,DC=MyDomain,DC=local"
-
-.EXAMPLE
-
-    .\Configure-AzStorageAccountForADDSAuthN.ps1 -storageAccountName "myStorageAccount" -ADOUDistinguishedName "OU=MyOU,DC=MyDomain,DC=local" -IsGovCloud
+    .\Configure-AzStorageAccountForADDSAuthN.ps1 -storageAccountName "myStorageAccount" -ADDomainFQDN ad.contoso.com -ADOUDistinguishedName "OU=MyOU,DC=ad,DC=contoso,DC=com" -Credential $cred
 
 .LINK
-    https://www.github.com/hooverken/ARM-Powershell
+    https://github.com/hooverken/ARMPowershell/tree/main/Configure-AzFilesShareForADDSAuthn
 #>
 
 #requires -version 7.0
@@ -88,7 +81,7 @@ param(
     [Parameter(mandatory = $true)][ValidateLength(1,15)][string]$storageAccountName,     # The name of the storage account with the share
     [Parameter(mandatory = $true)][string]$ADDomainFQDN,   # The full name of the domain to join like "ad.contoso.us"
     [Parameter(mandatory = $true)][string]$ADOuDistinguishedName,   # The full DN of the OU to put the new computer object in
-    [Parameter(mandatory = $true)][pscredential]$ADUpdateCredential   # PSCredential for a user with privilege to create/update a computer object in the target OU
+    [Parameter(mandatory = $true)][pscredential]$Credential   # PSCredential for a user with privilege to create/update a computer object in the target OU
 )
 
 ########################################################################################
@@ -107,7 +100,6 @@ $requiredModules | ForEach-Object {
         write-verbose ("Module $_ is present.")
     }
 }
-
 
 # The ActiveDirectory Module
 if (-not (Get-Module -Name ActiveDirectory -ListAvailable)) {
@@ -139,12 +131,17 @@ if (-not (Get-Module -Name ActiveDirectory -ListAvailable)) {
 # Make sure we are connected to Azure
 $currentContext = Get-AzContext -ErrorAction SilentlyContinue
 if ($null -eq $currentContext) {
-    write-warning ("Not connected to Azure (no context)`nPlease connect to Azure with Connect-AzAccount before running this script.")
-    exit
+    write-warning ("Not connected to Azure (no context)`nPlease connect to Azure with Connect-AzAccount.")
+    if (Get-Command -Module Az.Accounts Connect-AzAccount) {
+        Connect-AzAccount
+    } else {
+        Write-Error "The Az.Accounts module is not installed.  Please install it and try again."
+        exit 
+    }
 }
 
 # Verify that the AD credential we were given is valid
-if (-not ($Domain = Get-ADDomain -Identity $ADDomainFQDN -Credential $ADUpdateCredential)) {
+if (-not ($Domain = Get-ADDomain -Identity $ADDomainFQDN -Credential $Credential)) {
     write-warning ("The AD credential provided is not valid for domain $ADDomainFQDN.")
     exit
 } else {
@@ -203,9 +200,9 @@ Write-Verbose ("Active Directory SPN for this storage account will be set to $SP
 
 # Make sure the target OU DN exists
 $domainName = $Domain.dnsroot
-$OUlist = Get-ADObject -filter 'ObjectClass -eq "organizationalUnit"' -Credential $ADUpdateCredential
+$OUlist = Get-ADObject -filter 'ObjectClass -eq "organizationalUnit"' -Credential $Credential
 if ($OUlist.distinguishedName -contains $ADOuDistinguishedName) {
-    if (get-ADComputer -Filter { Name -eq $storageAccountName } -Credential $ADUpdateCredential -ErrorAction SilentlyContinue) {
+    if (get-ADComputer -Filter { Name -eq $storageAccountName } -Credential $Credential -ErrorAction SilentlyContinue) {
         write-verbose ("Computer object $storageAccountName is present in $domainName")
 
         # Since the computer account already exists, update it
@@ -213,7 +210,7 @@ if ($OUlist.distinguishedName -contains $ADOuDistinguishedName) {
         $result = Set-ADAccountPassword -Identity ("CN=$storageAccountName" + "," + $ADOuDistinguishedName) `
                      -Reset `
                      -NewPassword ($CompPassword | ConvertTo-SecureString -AsPlainText -Force) `
-                     -Credential $ADUpdateCredential `
+                     -Credential $Credential `
                      -Confirm:$false `
                      -ErrorAction Stop
         Write-Verbose ("Updating existing computer object $storageAccountName in domain $domainName.")
@@ -222,7 +219,7 @@ if ($OUlist.distinguishedName -contains $ADOuDistinguishedName) {
             -ServicePrincipalNames @{Add=$SPN} `
             -PasswordNeverExpires $true `
             -OperatingSystem "Azure Files" `
-            -Credential $ADUpdateCredential `
+            -Credential $Credential `
             -ErrorAction Stop
     } else {
         # Computer account doesn't exist so create it
@@ -234,8 +231,8 @@ if ($OUlist.distinguishedName -contains $ADOuDistinguishedName) {
             -PasswordNeverExpires $true `
             -OperatingSystem "Azure Files" `
             -AccountPassword $CompPassword `
-            -Credential $ADUpdateCredential
-        if (-not (get-ADComputer -Filter { Name -eq $storageAccountName } -Credential $ADUpdateCredential -ErrorAction SilentlyContinue)) {
+            -Credential $Credential
+        if (-not (get-ADComputer -Filter { Name -eq $storageAccountName } -Credential $Credential -ErrorAction SilentlyContinue)) {
             $result
             write-error ("Unable to create computer object $storageAccountName in OU `"$ADOuDistinguishedName`".")
             exit
@@ -253,7 +250,7 @@ if ($OUlist.distinguishedName -contains $ADOuDistinguishedName) {
 # Set the feature flag on the target storage account and provide the required AD domain information
 write-verbose ("Configuring " + $storageaccount.StorageAccountName + " for ADDS Authentication...")
 
-$Computer = Get-ADComputer $storageAccount.StorageAccountName -Credential $ADUpdateCredential  # The computer object in AD for this storage account
+$Computer = Get-ADComputer $storageAccount.StorageAccountName -Credential $Credential  # The computer object in AD for this storage account
 
 $updateresult = Set-AzStorageAccount `
         -ResourceGroupName $storageaccount.ResourceGroupName `
