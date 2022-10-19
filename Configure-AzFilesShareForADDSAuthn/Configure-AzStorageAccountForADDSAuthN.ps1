@@ -207,9 +207,9 @@ if ($OUlist.distinguishedName -contains $ADOuDistinguishedName) {
 
         # Since the computer account already exists, update it
         write-verbose ("Updating password for computer object in domain $domainName for $storageAccountName")
-        $result = Set-ADAccountPassword -Identity ("CN=$storageAccountName" + "," + $ADOuDistinguishedName) `
+        $result = Set-ADAccountPassword -Identity ("CN=$storageAccountName,$ADOuDistinguishedName") `
                      -Reset `
-                     -NewPassword ($CompPassword | ConvertTo-SecureString -AsPlainText -Force) `
+                     -NewPassword $CompPassword `
                      -Credential $Credential `
                      -Confirm:$false `
                      -ErrorAction Stop
