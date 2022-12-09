@@ -46,4 +46,4 @@ The full DistinguishedName (DN) of the OU for the new computer object to be crea
 
 Example: `OU=Azure Storage Accounts,DC=contoso,DC=com`
 
-![Screenshot](https://github.com/hooverken/ARMPowershell/blob/main/Configure-AzFilesShareForADDSAuthn/Configure-AzStorageAccountForADDSAuthN.png?raw=true)
+![Screenshot](https://github.com/hooverken/ARMPowershell/blob/main/Configure-AzStorageAccountForADDSAuthn/Configure-AzStorageAccountForADDSAuthN.png?raw=true)
