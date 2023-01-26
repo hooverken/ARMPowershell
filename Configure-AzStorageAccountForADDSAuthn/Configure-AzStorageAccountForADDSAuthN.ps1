@@ -200,6 +200,8 @@ Write-Verbose ("Active Directory SPN for this storage account will be set to $SP
 
 # Make sure the target OU DN exists
 $domainName = $Domain.dnsroot
+
+# Make sure we can find a DC for this domain that is running AD Web Services
 $domainControllerIpAddress = (Get-ADDomainController -Discover -Service ADWS -DomainName $domainName).IPv4Address
 if (!($domainControllerIpAddress)) { 
 	write-error ("No domain controller IP found for domain $domainName!")
