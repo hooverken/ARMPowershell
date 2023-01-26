@@ -200,21 +200,28 @@ Write-Verbose ("Active Directory SPN for this storage account will be set to $SP
 
 # Make sure the target OU DN exists
 $domainName = $Domain.dnsroot
-$OUlist = Get-ADObject -filter 'ObjectClass -eq "organizationalUnit"' -Credential $Credential
+$domainControllerIpAddress = (Get-ADDomainController -Discover -Service ADWS -DomainName $domainName).IPv4Address
+if (!($domainControllerIpAddress)) { 
+	write-error ("No domain controller IP found for domain $domainName!")
+	exit
+}
+$OUlist = Get-ADObject -filter 'ObjectClass -eq "organizationalUnit"' -Credential $Credential -server $domainControllerIpAddress
 if ($OUlist.distinguishedName -contains $ADOuDistinguishedName) {
-    if (get-ADComputer -Filter { Name -eq $storageAccountName } -Credential $Credential -ErrorAction SilentlyContinue) {
+    if (get-ADComputer -Filter { Name -eq $storageAccountName } -Credential $Credential -ErrorAction SilentlyContinue -server $domainControllerIpAddress) {
         write-verbose ("Computer object $storageAccountName is present in $domainName")
 
         # Since the computer account already exists, update it
         write-verbose ("Updating password for computer object in domain $domainName for $storageAccountName")
-        $result = Set-ADAccountPassword -Identity ("CN=$storageAccountName,$ADOuDistinguishedName") `
-                     -Reset `
-                     -NewPassword $CompPassword `
-                     -Credential $Credential `
-                     -Confirm:$false `
-                     -ErrorAction Stop
+        $result = Set-ADAccountPassword -server $domainControllerIpAddress `
+                    -Identity ("CN=$storageAccountName,$ADOuDistinguishedName") `
+                    -Reset `
+                    -NewPassword $CompPassword `
+                    -Credential $Credential `
+                    -Confirm:$false `
+                    -ErrorAction Stop
         Write-Verbose ("Updating existing computer object $storageAccountName in domain $domainName.")
-        $result = Set-ADComputer -Identity ("CN=$storageAccountName,$ADOuDistinguishedName") `
+        $result = Set-ADComputer -server $domainControllerIpAddress `
+            -Identity ("CN=$storageAccountName,$ADOuDistinguishedName") `
             -Description "DO NOT DELETE - Azure File Share Authentication Account" `
             -ServicePrincipalNames @{Add=$SPN} `
             -PasswordNeverExpires $true `
@@ -225,6 +232,7 @@ if ($OUlist.distinguishedName -contains $ADOuDistinguishedName) {
         # Computer account doesn't exist so create it
         write-verbose ("Creating computer object in domain $domainName for $storageAccountName")
         $result = New-ADComputer $storageAccount.StorageAccountName `
+            -server $domainControllerIpAddress `
             -path $ADOUDistinguishedName `
             -Description "DO NOT DELETE - Azure File Share Authentication Account" `
             -ServicePrincipalNames $SPN `
@@ -232,7 +240,7 @@ if ($OUlist.distinguishedName -contains $ADOuDistinguishedName) {
             -OperatingSystem "Azure Files" `
             -AccountPassword $CompPassword `
             -Credential $Credential
-        if (-not (get-ADComputer -Filter { Name -eq $storageAccountName } -Credential $Credential -ErrorAction SilentlyContinue)) {
+        if (-not (get-ADComputer -server $domainControllerIpAddress -Filter { Name -eq $storageAccountName } -Credential $Credential -ErrorAction SilentlyContinue)) {
             $result
             write-error ("Unable to create computer object $storageAccountName in OU `"$ADOuDistinguishedName`".")
             exit
@@ -250,7 +258,7 @@ if ($OUlist.distinguishedName -contains $ADOuDistinguishedName) {
 # Set the feature flag on the target storage account and provide the required AD domain information
 write-verbose ("Configuring " + $storageaccount.StorageAccountName + " for ADDS Authentication...")
 
-$Computer = Get-ADComputer $storageAccount.StorageAccountName -Credential $Credential  # The computer object in AD for this storage account
+$Computer = Get-ADComputer $storageAccount.StorageAccountName -Credential $Credential -server $domainControllerIpAddress # The computer object in AD for this storage account
 
 $updateresult = Set-AzStorageAccount `
         -ResourceGroupName $storageaccount.ResourceGroupName `
