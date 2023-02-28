@@ -1,7 +1,7 @@
 # Configure-AzFilesPermissionsForFSLogixProfileContainers.ps1
 # by Ken Hoover <ken dot hoover at microsoft dotcom>
 # Original version April 2021
-# Last update Sep 2022
+# Last update Feb 2023
 
 # This script configures an Azure Files share to hold FSLogix profiles
 # If the share name specified is not present on the storage account, it will be created.
@@ -23,6 +23,7 @@
 #               Improved handling of IAM role assignments and drive mapping
 # 29 Sep 2022 : (BUGFIX) NTFS permissions were not properly set for the Profile share's NTFS ACL (Issue #6)
 #               Gracefully deal with pre-existing SMB mappings to same server - unlikely but possible, especially when testing
+# 27 Feb 2023 : (logic fix) Simpler logic for checking if a SMB mapping to the storage account already exists
 
 <#
 .SYNOPSIS
@@ -235,19 +236,18 @@ $storageAccountKey = (Get-AzStorageAccountKey -ResourceGroupName $storageAccount
 
 
 # Get the primary file endpoint for this storage account.
-$result = ($storageaccount.PrimaryEndpoints.file -match "//(.*)/")
-$fileEndpoint = $matches[1]
+$fileEndpoint = $storageaccount.PrimaryEndpoints.file.split('/')[2]
 
 # Check if we already have a connection open to the same destination (even if it's a different share).  If so, drop the connection.
+Write-Verbose ("Checking if there are any existing drive mappings to the same endpoint.")
 Get-SmbMapping | ForEach-Object {
-    Write-Verbose ("Checking if there are any existing drive mappings to the same endpoint.")
     if ($_.RemotePath.contains($fileEndpoint)) {
         Write-Verbose ("Disconnecting existing SMB mount to " + $_.RemotePath)
         Remove-SmbMapping -RemotePath $_.RemotePath -Force
     }
 }
 
-$MapPath = "\\"+$endpointFqdn + "\" +$ShareName  # should work foir all clouds
+$MapPath = "\\"+$fileEndpint + "\" +$ShareName  # should work foir all clouds
 
 # Find an unused drive letter to map to the file share
 $unusedDriveLetters = [Char[]](90..65) | Where-Object { (Test-Path "${_}:\") -eq $false }

@@ -38,6 +38,7 @@
 # 18 Oct 2022 : Prompt for connection to Azure if Get-AzContext fails so we don't confuse the user
 #                 by making them re-run the script, especially if the necessary PS modules had to be
 #                 installed.
+# 26 Jan 2023 : [BUG] Add explicit connect to AD domain controller based on a search for AD Web Services.  This
 
 <#
 .SYNOPSIS
@@ -81,7 +82,7 @@ param(
     [Parameter(mandatory = $true)][ValidateLength(1,15)][string]$storageAccountName,     # The name of the storage account with the share
     [Parameter(mandatory = $true)][string]$ADDomainFQDN,   # The full name of the domain to join like "ad.contoso.us"
     [Parameter(mandatory = $true)][string]$ADOuDistinguishedName,   # The full DN of the OU to put the new computer object in
-    [Parameter(mandatory = $true)][pscredential]$Credential   # PSCredential for a user with privilege to create/update a computer object in the target OU
+    [Parameter(mandatory = $true)][pscredential]$Credential  # PSCredential for a user with privilege to create/update a computer object in the target OU
 )
 
 ########################################################################################
@@ -148,6 +149,13 @@ if (-not ($Domain = Get-ADDomain -Identity $ADDomainFQDN -Credential $Credential
     write-verbose ("The AD credential provided is valid for domain $ADDomainFQDN.")
 }
 
+# verify that there is a DC running AD Web Services that we can talk to (AD Cmdlets require this)
+$domainControllerIpAddress = (Get-ADDomainController -Discover -Service ADWS -DomainName $ADDomainFQDN).IPv4Address
+if (!($domainControllerIpAddress)) { 
+	write-error ("Can't find a domain controller running AD Web Services for domain $ADDomainFQDN!")
+	exit
+}
+
 # Confirm that the storage account specified actually exists.
 # This method is inefficient and can take several seconds but doing it this way means that we don't need to ask 
 # the user for the RG name.
@@ -201,12 +209,6 @@ Write-Verbose ("Active Directory SPN for this storage account will be set to $SP
 # Make sure the target OU DN exists
 $domainName = $Domain.dnsroot
 
-# Make sure we can find a DC for this domain that is running AD Web Services
-$domainControllerIpAddress = (Get-ADDomainController -Discover -Service ADWS -DomainName $domainName).IPv4Address
-if (!($domainControllerIpAddress)) { 
-	write-error ("No domain controller IP found for domain $domainName!")
-	exit
-}
 $OUlist = Get-ADObject -filter 'ObjectClass -eq "organizationalUnit"' -Credential $Credential -server $domainControllerIpAddress
 if ($OUlist.distinguishedName -contains $ADOuDistinguishedName) {
     if (get-ADComputer -Filter { Name -eq $storageAccountName } -Credential $Credential -ErrorAction SilentlyContinue -server $domainControllerIpAddress) {
