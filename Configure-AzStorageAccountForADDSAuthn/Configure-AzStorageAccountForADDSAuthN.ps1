@@ -209,9 +209,8 @@ Write-Verbose ("Active Directory SPN for this storage account will be set to $SP
 # Make sure the target OU DN exists
 $domainName = $Domain.dnsroot
 
-$OUlist = Get-ADObject -filter 'ObjectClass -eq "organizationalUnit"' -Credential $Credential -server $domainControllerIpAddress
-if ($OUlist.distinguishedName -contains $ADOuDistinguishedName) {
-    if (get-ADComputer -Filter { Name -eq $storageAccountName } -Credential $Credential -ErrorAction SilentlyContinue -server $domainControllerIpAddress) {
+$OUlist = Get-ADObject -filter 'DistinguishedName -eq $ADOuDistinguishedName' -Credential $Credential -server $domainName
+if ($null -ne $OUlist) {   if (get-ADComputer -Filter { Name -eq $storageAccountName } -Credential $Credential -ErrorAction SilentlyContinue -server $domainControllerIpAddress) {
         write-verbose ("Computer object $storageAccountName is present in $domainName")
 
         # Since the computer account already exists, update it
