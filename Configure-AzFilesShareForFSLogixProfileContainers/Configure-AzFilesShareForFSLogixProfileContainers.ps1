@@ -247,7 +247,7 @@ Get-SmbMapping | ForEach-Object {
     }
 }
 
-$MapPath = "\\"+$fileEndpint + "\" +$ShareName  # should work foir all clouds
+$MapPath = "\\"+$fileEndpoint + "\" +$ShareName  # should work foir all clouds
 
 # Find an unused drive letter to map to the file share
 $unusedDriveLetters = [Char[]](90..65) | Where-Object { (Test-Path "${_}:\") -eq $false }
