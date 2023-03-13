@@ -11,8 +11,8 @@
 [CmdletBinding()]
 param(
     [Parameter(mandatory = $true)][string]$storageAccountName,  # The name of the storage account to configure
-    [Parameter(mandatory = $true)][string]$domainFQDN      # The FQDN of the domain to configure, like "contoso.com"
-    # [Parameter(mandatory = $true)][string]$domainGUID       # The GUID (ObjectID) for the domain
+    [Parameter(mandatory = $true)][string]$domainFQDN,      # The FQDN of the domain to configure, like "contoso.com"
+    [Parameter(mandatory = $true)][PSCredential]$credentials       # The GUID (ObjectID) for the domain
 )   
 
 #
@@ -135,7 +135,7 @@ if ($storageAccount) {
     exit
 }
 
-$domainInformation = Get-ADDomain
+$domainInformation = Get-ADDomain -Credential $credentials -Server $domainFQDN
 $domainGuid = $domainInformation.ObjectGUID.ToString()
 $domainName = $domainInformation.DnsRoot
 
