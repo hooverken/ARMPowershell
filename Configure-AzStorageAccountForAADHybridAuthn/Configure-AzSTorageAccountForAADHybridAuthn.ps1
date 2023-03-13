@@ -143,8 +143,9 @@ Set-AzStorageAccount -ResourceGroupName $storageAccount.ResourceGroupName -Stora
 $application = Get-AzADApplication | where { $_.DisplayName.contains($storageAccount.PrimaryEndpoints.File.split('/')[2])}
 $ApplicationID = $application.AppId
 
+$msGraphApplicationObjectId
 $params = @{
-    "ClientId" = $ApplicationID
+    "ClientId" = $ApplicationID                             # Storage account's SP
     "ConsentType" = "AllPrincipals"                         # Grant to all principals
     "ResourceId" = (Get-MgContext).ClientId                 # Microsoft Graph GUID
     "Scope" = "openid profile User.Read"                    # Permission to grant
@@ -155,7 +156,7 @@ New-MgOauth2PermissionGrant -BodyParameter $params |
 
 
 # Verify that it worked
-Get-MgOauth2PermissionGrant -Filter "clientId eq '$ApplicationId' consentType eq 'AllPrincipals'"
+Get-MgOauth2PermissionGrant -Filter "clientId eq $ApplicationId" consentType eq 'AllPrincipals'"
 
 
 
