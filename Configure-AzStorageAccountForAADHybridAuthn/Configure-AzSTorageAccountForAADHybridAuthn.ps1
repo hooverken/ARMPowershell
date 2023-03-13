@@ -156,14 +156,13 @@ New-MgOauth2PermissionGrant -BodyParameter $params |
 
 
 # Verify that it worked
-Get-MgOauth2PermissionGrant -Filter "clientId eq $ApplicationId" consentType eq 'AllPrincipals'"
-
-
+$filter = "clientId eq $ApplicationId consentType eq 'AllPrincipals'"
+Get-MgOauth2PermissionGrant -Filter $filter
 
 # Set-AdminConsent -applicationId $ApplicationID -context (Get-AzContext)
 
 
-#We need to grant permission to the newly created App to read the logged-in user's information.
+# We need to grant permission to the newly created App to read the logged-in user's information.
 
 # $application = Get-AzADApplication | where { $_.DisplayName.contains($storageAccount.storageAccountName)}
 # $ApplicationID = $application.AppId
