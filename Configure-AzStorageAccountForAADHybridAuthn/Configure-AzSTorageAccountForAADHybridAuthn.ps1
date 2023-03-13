@@ -94,15 +94,13 @@ function Invoke-URLInDefaultBrowser
 function Set-AdminConsent {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory)]
-        [string]$applicationId,
+        [Parameter(Mandatory)][string]$applicationId,
         # The Azure Context]
-        [Parameter(Mandatory)]
-        [object]$context
+        [Parameter(Mandatory)][object]$context
     )
 
-    $token = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.AuthenticationFactory.Authenticate(
-        $context.Account, $context.Environment, $context.Tenant.Id, $null, "Never", $null, "74658136-14ec-4630-ad9b-26e160ff0fc6")
+    # $token = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.AuthenticationFactory.Authenticate(
+    #     $context.Account, $context.Environment, $context.Tenant.Id, $null, "Never", $null, "74658136-14ec-4630-ad9b-26e160ff0fc6")
 
     $headers = @{
         'Authorization'          = 'Bearer ' + (Get-AzAccessToken).token
@@ -145,7 +143,7 @@ Set-AzStorageAccount -ResourceGroupName $storageAccount.ResourceGroupName -Stora
 $application = Get-AzADApplication | where { $_.DisplayName.contains($storageAccount.storageAccountName)}
 $ApplicationID = $application.AppId
 
-Set-AdminConsent -applicationId $storageAccount.StorageAccountName -context (Get-AzContext)
+Set-AdminConsent -applicationId $ApplicationID -context (Get-AzContext)
 
 #We need to grant permission to the newly created App to read the logged-in user's information.
 
