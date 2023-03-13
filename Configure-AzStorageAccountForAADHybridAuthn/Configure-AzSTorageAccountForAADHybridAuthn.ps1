@@ -140,10 +140,27 @@ $domainName = $domainInformation.DnsRoot
 # Enable the storage account for Azure AD Kerberos authentication
 Set-AzStorageAccount -ResourceGroupName $storageAccount.ResourceGroupName -StorageAccountName $storageAccount.StorageAccountName -EnableAzureActiveDirectoryKerberosForFile $true -ActiveDirectoryDomainName $domainName -ActiveDirectoryDomainGuid $domainGuid
 
-$application = Get-AzADApplication | where { $_.DisplayName.contains($storageAccount.storageAccountName)}
+$application = Get-AzADApplication | where { $_.DisplayName.contains($storageAccount.PrimaryEndpoints.File.split('/')[2])}
 $ApplicationID = $application.AppId
 
-Set-AdminConsent -applicationId $ApplicationID -context (Get-AzContext)
+$params = @{
+    "ClientId" = $ApplicationID
+    "ConsentType" = "AllPrincipals"                     # Grant to all principals
+    "ResourceId" = "7ea9e944-71ce-443d-811c-71e8047b557a"   # Microsoft Graph
+    "Scope" = "User.Read"                                   # Permission to grant
+  }
+
+New-MgOauth2PermissionGrant -BodyParameter $params | 
+    Format-List Id, ClientId, ConsentType, ResourceId, Scope
+
+
+# Verify that it worked
+Get-MgOauth2PermissionGrant-Filter "clientId eq '$ApplicationId' consentType eq 'AllPrincipals'"
+
+
+
+# Set-AdminConsent -applicationId $ApplicationID -context (Get-AzContext)
+
 
 #We need to grant permission to the newly created App to read the logged-in user's information.
 
