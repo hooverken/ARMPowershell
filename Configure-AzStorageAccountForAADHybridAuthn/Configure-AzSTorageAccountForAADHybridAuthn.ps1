@@ -145,9 +145,9 @@ $ApplicationID = $application.AppId
 
 $params = @{
     "ClientId" = $ApplicationID
-    "ConsentType" = "AllPrincipals"                     # Grant to all principals
-    "ResourceId" = "7ea9e944-71ce-443d-811c-71e8047b557a"   # Microsoft Graph
-    "Scope" = "User.Read"                                   # Permission to grant
+    "ConsentType" = "AllPrincipals"                         # Grant to all principals
+    "ResourceId" = (Get-MgContext).ClientId                 # Microsoft Graph GUID
+    "Scope" = "openid profile User.Read"                    # Permission to grant
   }
 
 New-MgOauth2PermissionGrant -BodyParameter $params | 
@@ -155,7 +155,7 @@ New-MgOauth2PermissionGrant -BodyParameter $params |
 
 
 # Verify that it worked
-Get-MgOauth2PermissionGrant-Filter "clientId eq '$ApplicationId' consentType eq 'AllPrincipals'"
+Get-MgOauth2PermissionGrant -Filter "clientId eq '$ApplicationId' consentType eq 'AllPrincipals'"
 
 
 
