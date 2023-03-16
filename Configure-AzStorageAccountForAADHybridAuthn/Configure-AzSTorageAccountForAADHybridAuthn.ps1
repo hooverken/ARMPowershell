@@ -156,7 +156,7 @@ New-MgOauth2PermissionGrant -BodyParameter $params |
 
 
 # Verify that it worked
-$filter = "clientId eq $ApplicationId consentType eq 'AllPrincipals'"
+$filter = "'clientId eq $ApplicationId consentType eq 'AllPrincipals'"
 Get-MgOauth2PermissionGrant -Filter $filter
 
 # Set-AdminConsent -applicationId $ApplicationID -context (Get-AzContext)
@@ -164,33 +164,33 @@ Get-MgOauth2PermissionGrant -Filter $filter
 
 # We need to grant permission to the newly created App to read the logged-in user's information.
 
-# $application = Get-AzADApplication | where { $_.DisplayName.contains($storageAccount.storageAccountName)}
-# $ApplicationID = $application.AppId
-# $tenantId = (Get-AzContext).Tenant.Id
-# $consentGrantUrl = "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/authorize?client_id=$ApplicationID&response_type=code&redirect_uri=http%3A%2F%2Fwww.microsoft.com&response_mode=query&scope=User.Read&state=12345"
+$application = Get-AzADApplication | where { $_.DisplayName.contains($storageAccount.storageAccountName)}
+$ApplicationID = $application.AppId
+$tenantId = (Get-AzContext).Tenant.Id
+$consentGrantUrl = "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/authorize?client_id=$ApplicationID&response_type=code&redirect_uri=http%3A%2F%2Fwww.microsoft.com&response_mode=query&scope=User.Read&state=12345"
 
 # I spent a bunch of time trying to figure out how to do this with the Graph API but decided to
 # do it this way so I can get this script out sooner.  I'm going to keep working on finding a way to just
 # "make it happen" during script execution but there doesn't seem to be an easy way to do it.
 
-# $msgTitle = "Permission grant required"
-# $msgBody = "You must log in as a global admin account on the next screen in order to grant the $storageAccountName application permission to read the logged-in user's information.  Once you've done that, the process will be complete.  Do you want to do this now?"
-# Add-Type -AssemblyName PresentationCore,PresentationFramework
-# $msgButton = 'YesNo'
-# $msgImage = 'Question'
-# $Result = [System.Windows.MessageBox]::Show($msgBody,$msgTitle,$msgButton,$msgImage)
-# if ($Result -eq "Yes") {
-#     # Bring up the application consent page in the default browser so the user can grant consent.
-#     Invoke-URLInDefaultBrowser -URL $consentGrantUrl
-# } else {
-#     # The user clicked no so put URL they need to go to on the clipboard and notify them.
-#     $msgTitle = "URL copied to clipboard"
-#     $msgBody = "The URL to grant permission has been copied to the clipboard.  Please paste it into your browser and grant consent."
-#     Add-Type -AssemblyName PresentationCore,PresentationFramework
-#     $msgButton = 'OK'
-#     $msgImage = 'Warning'
-#     $Result = [System.Windows.MessageBox]::Show($msgBody,$msgTitle,$msgButton,$msgImage)
-#     Set-Clipboard $consentGrantUrl  # put the grant consent URL on the clipboard so user can paste it.
-#     Write-Warning ("Admin Consent must still be granted to the storage account $storageAccountName.  Please visit $url to complete the process.  The URL has been copied to the clipboard.")
-# }
+$msgTitle = "Permission grant required"
+$msgBody = "You must log in as a global admin account on the next screen in order to grant the $storageAccountName application permission to read the logged-in user's information.  Once you've done that, the process will be complete.  Do you want to do this now?"
+Add-Type -AssemblyName PresentationCore,PresentationFramework
+$msgButton = 'YesNo'
+$msgImage = 'Question'
+$Result = [System.Windows.MessageBox]::Show($msgBody,$msgTitle,$msgButton,$msgImage)
+if ($Result -eq "Yes") {
+    # Bring up the application consent page in the default browser so the user can grant consent.
+    Invoke-URLInDefaultBrowser -URL $consentGrantUrl
+} else {
+    # The user clicked no so put URL they need to go to on the clipboard and notify them.
+    $msgTitle = "URL copied to clipboard"
+    $msgBody = "The URL to grant permission has been copied to the clipboard.  Please paste it into your browser and grant consent."
+    Add-Type -AssemblyName PresentationCore,PresentationFramework
+    $msgButton = 'OK'
+    $msgImage = 'Warning'
+    $Result = [System.Windows.MessageBox]::Show($msgBody,$msgTitle,$msgButton,$msgImage)
+    Set-Clipboard $consentGrantUrl  # put the grant consent URL on the clipboard so user can paste it.
+    Write-Warning ("Admin Consent must still be granted to the storage account $storageAccountName.  Please visit $url to complete the process.  The URL has been copied to the clipboard.")
+}
 
