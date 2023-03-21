@@ -140,14 +140,17 @@ Set-AzStorageAccount -ResourceGroupName $storageAccount.ResourceGroupName -Stora
 
 # We need to grant permission to the newly created App to read the logged-in user's information.
 
-$application = Get-AzADApplication | where { $_.DisplayName.contains($storageAccount.storageAccountName)}
+$application = Get-AzADApplication | where { $_.DisplayName.EndsWith($storageAccount.PrimaryEndpoints.file.split('/')[2])}
 $ApplicationID = $application.AppId
-$tenantId = (Get-AzContext).Tenant.Id
-$consentGrantUrl = "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/authorize?client_id=$ApplicationID&response_type=code&redirect_uri=http%3A%2F%2Fwww.microsoft.com&response_mode=query&scope=User.Read&state=12345"
+
+# $tenantId = (Get-AzContext).Tenant.Id
+# $consentGrantUrl = "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/authorize?client_id=$ApplicationID&response_type=code&redirect_uri=http%3A%2F%2Fwww.microsoft.com&response_mode=query&scope=User.Read&state=12345"
 
 # I spent a bunch of time trying to figure out how to do this with the Graph API but decided to
 # do it this way so I can get this script out sooner.  I'm going to keep working on inding a way to just
 # "make it happen" during script execution but there doesn't seem to be an easy way to do it.
+
+$ApplicationID
 
 Set-AdminConsent -applicationId $ApplicationID -context (Get-AzContext)
 
