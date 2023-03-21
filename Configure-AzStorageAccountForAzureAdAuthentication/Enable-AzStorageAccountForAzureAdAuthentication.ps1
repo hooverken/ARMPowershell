@@ -96,18 +96,15 @@ function Invoke-URLInDefaultBrowser
 function Set-AdminConsent {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory)]
-        [string]$applicationId,
-        # The Azure Context]
-        [Parameter(Mandatory)]
-        [object]$context
+        [Parameter(Mandatory)][string]$applicationId,
+        [Parameter(Mandatory)][object]$context  # The Azure Context]
     )
 
     $token = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.AuthenticationFactory.Authenticate(
         $context.Account, $context.Environment, $context.Tenant.Id, $null, "Never", $null, "74658136-14ec-4630-ad9b-26e160ff0fc6")
 
     $headers = @{
-        'Authorization'          = 'Bearer ' + (Get-AzAccessToken).token
+        'Authorization'          = 'Bearer ' + $token
         'X-Requested-With'       = 'XMLHttpRequest'
         'x-ms-client-request-id' = [guid]::NewGuid()
     }
@@ -141,7 +138,6 @@ if ($storageAccount) {
 # Enable the storage account for Azure AD Kerberos authentication
 Set-AzStorageAccount -ResourceGroupName $storageAccount.ResourceGroupName -StorageAccountName $storageAccount.StorageAccountName -EnableAzureActiveDirectoryKerberosForFile $true -ActiveDirectoryDomainName $domainName -ActiveDirectoryDomainGuid $domainGuid
 
-
 # We need to grant permission to the newly created App to read the logged-in user's information.
 
 $application = Get-AzADApplication | where { $_.DisplayName.contains($storageAccount.storageAccountName)}
@@ -153,24 +149,26 @@ $consentGrantUrl = "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/auth
 # do it this way so I can get this script out sooner.  I'm going to keep working on inding a way to just
 # "make it happen" during script execution but there doesn't seem to be an easy way to do it.
 
-$msgTitle = "Permission grant required"
-$msgBody = "You must log in as a global admin account on the next screen in order to grant the $storageAccountName application permission to read the logged-in user's information.  Once you've done that, the process will be complete.  Do you want to do this now?"
-Add-Type -AssemblyName PresentationCore,PresentationFramework
-$msgButton = 'YesNo'
-$msgImage = 'Question'
-$Result = [System.Windows.MessageBox]::Show($msgBody,$msgTitle,$msgButton,$msgImage)
-if ($Result -eq "Yes") {
-    # Bring up the application consent page in the default browser so the user can grant consent.
-    Invoke-URLInDefaultBrowser -URL $consentGrantUrl
-} else {
-    # The user clicked no so put URL they need to go to on the clipboard and notify them.
-    $msgTitle = "URL copied to clipboard"
-    $msgBody = "The URL to grant permission has been copied to the clipboard.  Please paste it into your browser and grant consent."
-    Add-Type -AssemblyName PresentationCore,PresentationFramework
-    $msgButton = 'OK'
-    $msgImage = 'Warning'
-    $Result = [System.Windows.MessageBox]::Show($msgBody,$msgTitle,$msgButton,$msgImage)
-    Set-Clipboard $consentGrantUrl  # put the grant consent URL on the clipboard so user can paste it.
-    Write-Warning ("Admin Consent must still be granted to the storage account $storageAccountName.  Please visit $url to complete the process.  The URL has been copied to the clipboard.")
-}
+Set-AdminConsent -applicationId $ApplicationID -context (Get-AzContext)
+
+# $msgTitle = "Permission grant required"
+# $msgBody = "You must log in as a global admin account on the next screen in order to grant the $storageAccountName application permission to read the logged-in user's information.  Once you've done that, the process will be complete.  Do you want to do this now?"
+# Add-Type -AssemblyName PresentationCore,PresentationFramework
+# $msgButton = 'YesNo'
+# $msgImage = 'Question'
+# $Result = [System.Windows.MessageBox]::Show($msgBody,$msgTitle,$msgButton,$msgImage)
+# if ($Result -eq "Yes") {
+#     # Bring up the application consent page in the default browser so the user can grant consent.
+#     Invoke-URLInDefaultBrowser -URL $consentGrantUrl
+# } else {
+#     # The user clicked no so put URL they need to go to on the clipboard and notify them.
+#     $msgTitle = "URL copied to clipboard"
+#     $msgBody = "The URL to grant permission has been copied to the clipboard.  Please paste it into your browser and grant consent."
+#     Add-Type -AssemblyName PresentationCore,PresentationFramework
+#     $msgButton = 'OK'
+#     $msgImage = 'Warning'
+#     $Result = [System.Windows.MessageBox]::Show($msgBody,$msgTitle,$msgButton,$msgImage)
+#     Set-Clipboard $consentGrantUrl  # put the grant consent URL on the clipboard so user can paste it.
+#     Write-Warning ("Admin Consent must still be granted to the storage account $storageAccountName.  Please visit $url to complete the process.  The URL has been copied to the clipboard.")
+# }
 
