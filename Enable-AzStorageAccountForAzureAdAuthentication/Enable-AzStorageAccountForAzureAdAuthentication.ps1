@@ -28,8 +28,6 @@ function Set-AdminConsent {
     $token = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.AuthenticationFactory.Authenticate(
         $context.Account, $context.Environment, $context.Tenant.Id, $null, "Never", $null, "74658136-14ec-4630-ad9b-26e160ff0fc6")
 
-    $token | Get-Member
-
     $headers = @{
         'Authorization'          = 'Bearer ' + $token.AccessToken
         'X-Requested-With'       = 'XMLHttpRequest'
@@ -38,7 +36,7 @@ function Set-AdminConsent {
 
     $url = "https://main.iam.ad.ext.azure.com/api/RegisteredApplications/$applicationId/Consent?onBehalfOfAll=true"
 
-    $result = Invoke-RestMethod -Uri $url -Headers $headers -Method POST -ErrorAction Stop -verbose
+    $result = Invoke-RestMethod -Uri $url -Headers $headers -Method POST -ErrorAction Stop
 
     return $result
 }
