@@ -77,11 +77,12 @@ do {
 Write-Verbose ("Making sure the application ID is usable.")
 do {
     Write-Verbose ("5 seconds...")
-    Start-Sleep -Seconds 5
+    Start-Sleep -Seconds 10
 } until (Get-AzADApplication -ApplicationId $application.AppId)
 
 # We need to grant admin consent to the newly created App to read the logged-in user's information.
-Write-Verbose ("Applying required admin consent for application ID $appId")
+Write-Verbose ("Applying required admin consent for application ID " + $application.AppId)
+
 $consentResult = Set-AdminConsent -applicationId $application.AppId -context (Get-AzContext)
 
 $consentResult
