@@ -75,10 +75,13 @@ do {
     $application = Get-AzADApplication | Where-Object { $_.DisplayName.EndsWith($storageAccount.PrimaryEndpoints.file.split('/')[2])}
 } while (!$application)
 
-# We need to grant admin consent to the newly created App to read the logged-in user's information.
-$application = Get-AzADApplication | Where-Object { $_.DisplayName.EndsWith($storageAccount.PrimaryEndpoints.file.split('/')[2])}
-$appId = $application.AppId
+# To make sure things have settled, use the application ID to look up the app in the other direction
+do {
+    $app = Get-AzADApplication -ApplicationId $application.AppId | Out-Null
+} until ($null -ne $app)
 
+$appID = $app.AppId
+# We need to grant admin consent to the newly created App to read the logged-in user's information.
 Write-Verbose ("Applying required admin consent for application ID $appId")
 $consentResult = Set-AdminConsent -applicationId $appId -context (Get-AzContext)
 
