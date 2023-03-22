@@ -1,1 +1,0 @@
-Set-Item -path HKLM:Software\Policies\Microsoft\AzureADAccount\LoadCredKeyFromProfile -Type DWORD -Value 1
