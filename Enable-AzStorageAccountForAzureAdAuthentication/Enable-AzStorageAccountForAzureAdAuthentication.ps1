@@ -38,7 +38,9 @@ function Set-AdminConsent {
 
     $url = "https://main.iam.ad.ext.azure.com/api/RegisteredApplications/$applicationId/Consent?onBehalfOfAll=true"
 
-    Invoke-RestMethod -Uri $url -Headers $headers -Method POST -ErrorAction Stop -verbose
+    $result = Invoke-RestMethod -Uri $url -Headers $headers -Method POST -ErrorAction Stop -verbose
+
+    return $result
 }
 
 ######################### MAIN PROGRAM EXECUTION BEGINS BELOW ##############################
@@ -57,15 +59,26 @@ if ($storageAccount) {
 }
 
 # Enable the storage account for Azure AD Kerberos authentication
-Set-AzStorageAccount -ResourceGroupName $storageAccount.ResourceGroupName -StorageAccountName $storageAccount.StorageAccountName -EnableAzureActiveDirectoryKerberosForFile $true -ActiveDirectoryDomainName $domainName -ActiveDirectoryDomainGuid $domainGuid
+Write-Verbose ("Enabling AD Kerberos for Files on $storageAccountName.")
+$result = Set-AzStorageAccount -ResourceGroupName $storageAccount.ResourceGroupName -StorageAccountName $storageAccount.StorageAccountName -EnableAzureActiveDirectoryKerberosForFile $true -ActiveDirectoryDomainName $domainName -ActiveDirectoryDomainGuid $domainGuid
+
+if (!($result)) {
+    Write-Warning ("Failed to enable AD Kerberos for Files on $storageAccountName.")
+    exit
+}
+
+# wait a few seconds for things to propagatge
+Write-Verbose ("Waiting 10 seconds for AAD configuration change to propagate...")
+Start-Sleep -Seconds 10
 
 # We need to grant admin consent to the newly created App to read the logged-in user's information.
 $application = Get-AzADApplication | Where-Object { $_.DisplayName.EndsWith($storageAccount.PrimaryEndpoints.file.split('/')[2])}
 $appId = $application.AppId
 
-$appId
-exit
+Write-Verbose ("Applying required admin consent for application ID $appId")
+$result = Set-AdminConsent -applicationId $appId -context (Get-AzContext)
 
-Set-AdminConsent -applicationId $appId -context (Get-AzContext)
+$result
+# That's it.  
 
-# That's it.  How can we verify that this has been done??
+# TODO: How can we verify that this has been done??
