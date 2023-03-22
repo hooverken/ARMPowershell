@@ -63,6 +63,9 @@ Set-AzStorageAccount -ResourceGroupName $storageAccount.ResourceGroupName -Stora
 $application = Get-AzADApplication | Where-Object { $_.DisplayName.EndsWith($storageAccount.PrimaryEndpoints.file.split('/')[2])}
 $appId = $application.AppId
 
+$appId
+exit
+
 Set-AdminConsent -applicationId $appId -context (Get-AzContext)
 
 # That's it.  How can we verify that this has been done??
