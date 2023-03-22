@@ -76,9 +76,9 @@ $application = Get-AzADApplication | Where-Object { $_.DisplayName.EndsWith($sto
 $appId = $application.AppId
 
 Write-Verbose ("Applying required admin consent for application ID $appId")
-$result = Set-AdminConsent -applicationId $appId -context (Get-AzContext)
+$consentResult = Set-AdminConsent -applicationId $appId -context (Get-AzContext)
 
-$result
+$consentResult
 # That's it.  
 
 # TODO: How can we verify that this has been done??
