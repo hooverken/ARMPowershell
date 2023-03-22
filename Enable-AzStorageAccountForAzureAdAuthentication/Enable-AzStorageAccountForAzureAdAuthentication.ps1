@@ -1,4 +1,4 @@
-# Configure-AzStorageAccountForAzureAdAuthentication.ps1
+# Enable-AzStorageAccountForAzureAdAuthentication.ps1
 # by Ken Hoover <ken.dot..hoo verat...micro..soft...dotcom>
 # March 2023
 

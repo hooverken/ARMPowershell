@@ -152,8 +152,9 @@ if ($false -eq $storageaccount.AllowSharedKeyAccess) {
     exit
 }
 
-# Verify that the storage account is configured to use AD DS Authentication
-if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD") -and `
+# Verify that the storage account is configured to use AD Authentication (either ADDS or AzureAD Kerberos)
+$adAuthenticationType = $storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions
+if ((($adAuthenticationType -eq "AD") -or ($adAuthenticationType -eq "AADKERB")) -and `
     ($storageaccount.AzureFilesIdentityBasedAuth.ActiveDirectoryProperties.DomainName)) {
     write-verbose ("Storage account $storageAccountName is configured to use AD domain " + ($storageaccount.AzureFilesIdentityBasedAuth.ActiveDirectoryProperties.DomainName + " for authentication."))
 } else {
