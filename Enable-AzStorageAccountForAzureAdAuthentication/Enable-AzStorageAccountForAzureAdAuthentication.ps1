@@ -61,7 +61,8 @@ Set-AzStorageAccount -ResourceGroupName $storageAccount.ResourceGroupName -Stora
 
 # We need to grant admin consent to the newly created App to read the logged-in user's information.
 $application = Get-AzADApplication | Where-Object { $_.DisplayName.EndsWith($storageAccount.PrimaryEndpoints.file.split('/')[2])}
+$appId = $application.AppId
 
-Set-AdminConsent -applicationId $application.AppId -context (Get-AzContext)
+Set-AdminConsent -applicationId $appId -context (Get-AzContext)
 
 # That's it.  How can we verify that this has been done??
