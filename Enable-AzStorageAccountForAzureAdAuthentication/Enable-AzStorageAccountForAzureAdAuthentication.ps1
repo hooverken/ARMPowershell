@@ -50,8 +50,7 @@ $storageAccount = Get-AzStorageAccount | Where-Object { $_.StorageAccountName -e
 
 Write-Verbose ("Verifying that we can connect to the storage account")
 if ($storageAccount) {
-    $storageAccountResourceId = $storageAccount.Id
-    Write-Verbose ("Storage account $storageAccountName resource ID is $storageAccountResourceId")
+    Write-Verbose ("Storage account $storageAccountName is present")
 } else {
     Write-Warning ("Storage account $storageAccountName not found in current subscription.")
     exit
@@ -61,9 +60,8 @@ if ($storageAccount) {
 Set-AzStorageAccount -ResourceGroupName $storageAccount.ResourceGroupName -StorageAccountName $storageAccount.StorageAccountName -EnableAzureActiveDirectoryKerberosForFile $true -ActiveDirectoryDomainName $domainName -ActiveDirectoryDomainGuid $domainGuid
 
 # We need to grant admin consent to the newly created App to read the logged-in user's information.
-$application = Get-AzADApplication | where { $_.DisplayName.EndsWith($storageAccount.PrimaryEndpoints.file.split('/')[2])}
-$ApplicationID = $application.AppId
+$application = Get-AzADApplication | Where-Object { $_.DisplayName.EndsWith($storageAccount.PrimaryEndpoints.file.split('/')[2])}
 
-Set-AdminConsent -applicationId $ApplicationID -context (Get-AzContext)
+Set-AdminConsent -applicationId $application.AppId -context (Get-AzContext)
 
 # That's it.  How can we verify that this has been done??
