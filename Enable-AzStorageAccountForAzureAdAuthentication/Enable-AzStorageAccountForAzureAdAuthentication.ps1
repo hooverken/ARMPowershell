@@ -68,7 +68,7 @@ if (!($result)) {
 }
 
 # wait a few seconds for things to propagatge
-Write-Verbose ("Waiting for AAD configuration change to propagate...")  
+Write-Verbose ("Waiting for app registration to appear in AAD...")  
 do {
     Start-Sleep -Seconds 5
     Write-Verbose ("5 seconds...")
@@ -76,12 +76,12 @@ do {
 } while (!$application)
 
 # To make sure things have settled, use the application ID to look up the app in the other direction
-Write-Verbose ("Making sure the application is ready.")
+Write-Verbose ("Making sure the application ID is usable.")
 do {
     Write-Verbose ("5 seconds...")
     Start-Sleep -Seconds 5
     $app = Get-AzADApplication -ApplicationId $application.AppId
-} until ($null -ne $app)
+} while ($null -ne $app)
 
 $appID = $app.AppId
 # We need to grant admin consent to the newly created App to read the logged-in user's information.
