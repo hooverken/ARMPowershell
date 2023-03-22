@@ -45,10 +45,8 @@ function Set-AdminConsent {
 
 # Confirm that the storage account specified actually exists
 # Yes, this method is slow but it means that we don't need to ask the user for the resource group name of the storage account
-write-verbose ("Verifying that $storageAccountName exists.  This will take a moment..." )
 $storageAccount = Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $storageAccountName }
 
-Write-Verbose ("Verifying that we can connect to the storage account")
 if ($storageAccount) {
     Write-Verbose ("Storage account $storageAccountName is present")
 } else {
