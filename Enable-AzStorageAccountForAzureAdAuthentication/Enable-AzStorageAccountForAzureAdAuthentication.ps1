@@ -68,8 +68,12 @@ if (!($result)) {
 }
 
 # wait a few seconds for things to propagatge
-Write-Verbose ("Waiting 10 seconds for AAD configuration change to propagate...")
-Start-Sleep -Seconds 10
+Write-Verbose ("Waiting for AAD configuration change to propagate...")  
+do {
+    Start-Sleep -Seconds 5
+    Write-Verbose ("5 seconds...")
+    $application = Get-AzADApplication | Where-Object { $_.DisplayName.EndsWith($storageAccount.PrimaryEndpoints.file.split('/')[2])}
+} while (!$application)
 
 # We need to grant admin consent to the newly created App to read the logged-in user's information.
 $application = Get-AzADApplication | Where-Object { $_.DisplayName.EndsWith($storageAccount.PrimaryEndpoints.file.split('/')[2])}
