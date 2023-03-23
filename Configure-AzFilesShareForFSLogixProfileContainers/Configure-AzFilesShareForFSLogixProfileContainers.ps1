@@ -24,6 +24,7 @@
 # 29 Sep 2022 : (BUGFIX) NTFS permissions were not properly set for the Profile share's NTFS ACL (Issue #6)
 #               Gracefully deal with pre-existing SMB mappings to same server - unlikely but possible, especially when testing
 # 27 Feb 2023 : (logic fix) Simpler logic for checking if a SMB mapping to the storage account already exists
+# 23 Mar 2023 : (BUGFIX) Force UPN suffix for user in context to lowercase when matching to avoid issues with AAD domain name check
 
 <#
 .SYNOPSIS
@@ -110,7 +111,7 @@ if ($currentContext.Account.Id -match $guidMatchRegEx) {
 }
 
 # This looks to see if the user's UPN suffix is in the list of domains for the tenant.
-$userdomain = $currentContext.Account.Id.split('@')[1]  # UPN suffix of the authenticated user.
+$userdomain = $currentContext.Account.Id.split('@')[1].tolower()  # UPN suffix of the authenticated user.
 if ($null -eq (Get-AzTenant -ErrorAction SilentlyContinue | Where-Object { $_.Domains.Contains($userdomain)})) {
     Write-Warning "Azure AD information not available, cannot proceed."
     exit
