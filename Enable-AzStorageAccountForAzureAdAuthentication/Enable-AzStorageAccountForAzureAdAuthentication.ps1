@@ -14,11 +14,43 @@ param(
 )   
 
 
-# Thanks to teammate and generally awesome guy Sven Aelterman for the below function to
-# silently do the admin consent grant via a REST call
-# (assuming you're logged in with the correct privilges of course!)
+<#
+.SYNOPSIS
 
+This script configures an Azure Files share for authentication using Azure AD Kerberos.
+
+.DESCRIPTION
+
+This script configures an Azure Storage account for authentication via Azure AD Kerberos as described at https://learn.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-azure-active-directory-enable?tabs=azure-portal
+
+To use it, follow these steps:
+
+...
+
+.PARAMETER storageAccountName
+
+The name of the storage account to configure.  The storage account must exist and have a name which is 15 characters or less in length to avoid legacy NetBIOS naming issues.
+
+.PARAMETER domainName
+
+The full name of the AD domain to work with, like "ad.contoso.com"
+
+.PARAMETER doimainGuid
+
+The GUID of the AD domain listed above.  You can get this from Get-AdDomain, for example.
+
+.EXAMPLE
+
+...
+
+.LINK
+    https://www.github.com/hooverken/ARM-Powershell
+#>
 function Set-AdminConsent {
+    # Thanks to teammate and generally awesome guy Sven Aelterman for the below function to
+    # silently do the admin consent grant via a REST call
+    # (assuming you're logged in with the correct privilges of course!)
+
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)][string]$applicationId,

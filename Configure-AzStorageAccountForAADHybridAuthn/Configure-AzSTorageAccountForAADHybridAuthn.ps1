@@ -7,15 +7,12 @@
 # This script enables an Azure Storage account for Kerberos Authentication
 # This is intended for use with FSLogix
 
-
 [CmdletBinding()]
 param(
     [Parameter(mandatory = $true)][string]$storageAccountName,  # The name of the storage account to configure
     [Parameter(mandatory = $true)][string]$domainFQDN,      # The FQDN of the domain to configure, like "contoso.com"
     [Parameter(mandatory = $true)][PSCredential]$credentials       # The GUID (ObjectID) for the domain
 )   
-
-#
 
 ###############################################################################################
 # Function below borrowed intact from https://gist.github.com/jkdba/54fd3a3222ee3bae1436028d54634e7a
