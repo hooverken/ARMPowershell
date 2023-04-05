@@ -4,10 +4,12 @@ A script to configure an Azurte storage account for AzureAD Kerberos authenticat
 
 ## Prerequisites / Assumptions
 
-* You need Powershell 7 installed
+The system that you run this fron should meet the following requirements
+
+* Powershell 7 is installed
+* Powershell is running in an elevated (Administrator) context
 * The `Az` and `AzureAD` modules are installed
 * Your Powershell session is connected to Azure using `Connect-AzAccount`
-* 
 
 ## Parameters
 
