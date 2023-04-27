@@ -77,6 +77,8 @@ A PSCredential object for a user with rights to add/update the computer account 
 
 #requires -version 7.0
 
+#requires -runAsAdministrator
+
 [CmdletBinding()]
 param(
     [Parameter(mandatory = $true)][ValidateLength(1,15)][string]$storageAccountName,     # The name of the storage account with the share
