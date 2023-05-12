@@ -1,8 +1,14 @@
 # Get-ExpressRouteLocationSpeedOfferings.ps1
 
-This script walks through the list of ExpressRoute providers and locations to see which provider has which port speedss avaialble in which locations.
+This script walks through the list of ExpressRoute providers and locations to see which provider has which port speeds avaialble in which locations.  
 
-There are only two speed offerings at this time - 10Gb and 100Gb.
+There is a lot of demand for ports, especially for 100Gb links and availabilirty can fluctuate from day to day.
+
+There are only two ExpressRoute port speed offerings at this time - 10Gb and 100Gb.
+
+> It's important to understand that the bandwidth of an ExpressRoute circuit is configured **separately** from the link speed of the physical port provided by the ISP.  For example, you can uase a 10Gb port and have your ExpressRoute circuit bandwidth set to 5Gb.
+
+## Output
 
 The output is a list of objects with the following properties:
 
