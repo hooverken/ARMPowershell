@@ -6,7 +6,7 @@ There is a lot of demand for ports, especially for 100Gb links and availabilirty
 
 There are only two ExpressRoute port speed offerings at this time - 10Gb and 100Gb.
 
-> It's important to understand that the bandwidth of an ExpressRoute circuit is configured **separately** from the link speed of the physical port provided by the ISP.  For example, you can uase a 10Gb port and have your ExpressRoute circuit bandwidth set to 5Gb.
+> It's important to understand that the bandwidth of an ExpressRoute circuit is configured **separately** from the link speed of the physical port provided by the ISP.  For example, you can attach using a 10Gb port and have your ExpressRoute circuit bandwidth set to 5Gb.
 
 ## Output
 
