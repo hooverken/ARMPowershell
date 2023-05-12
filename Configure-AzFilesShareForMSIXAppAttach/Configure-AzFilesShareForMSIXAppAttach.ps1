@@ -137,7 +137,7 @@ if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD
 }
 
 # The AD group containing users that will nbe using MSIX-app-attached app;lications
-if (-not ($appAttachADUsersGroupObj = Get-ADGroup $appAttachADUsersGroup -Credential $ADCredential)) {
+if (-not ($appAttachADUsersGroupObj = Get-ADGroup $appAttachADUsersGroup -Server kentoso.us -Credential $ADCredential)) {
     Write-Warning ("Group `"$AppAttachADUsersGroup`" not found in AD.  This group must exist before running this script.")
     exit
 } else {
@@ -145,7 +145,7 @@ if (-not ($appAttachADUsersGroupObj = Get-ADGroup $appAttachADUsersGroup -Creden
 }
 
 # The AD group containing the computer objects for the AVD session hosts that will use MISX app attach
-if (-not ($appAttachADComputersGroupObj= Get-ADGroup $appAttachADComputersGroup -Credential $ADCredential)) {
+if (-not ($appAttachADComputersGroupObj= Get-ADGroup $appAttachADComputersGroup -server kentoso.us -Credential $ADCredential)) {
     Write-Warning ("Group `"$appAttachADComputersGroup`" not found in AD.  This group must exist before running this script.")
     exit
 } else {
@@ -246,12 +246,12 @@ $acl.purgeAccessRules($identityReference)
 
 # Add the AAD group for elevated users
 write-verbose ("... Adding `"$appAttachADUsersGroup`" (ReadAndExecute)")
-$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $appAttachADUsersGroup, "ReadAndExecute", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
-$acl.SetAccessRule($rule)
+$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $appAttachADUsersGroupObj.SID, "ReadAndExecute", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
+Group$acl.SetAccessRule($rule)
 
 # Add the AAD group for normal users
 write-verbose ("... Adding `"$appAttachADComputersGroup`" (ReadAndExecute)")
-$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $appAttachADComputersGroup, "ReadAndExecute", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
+$rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $appAttachADComputersGroupObj.SID, "ReadAndExecute", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
 $acl.SetAccessRule($rule)
 
 # Apply the new ACL
