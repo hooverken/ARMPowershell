@@ -2,7 +2,7 @@
 
 This script walks through the list of ExpressRoute providers and locations to see which provider has which port speeds available in which locations.  
 
-There is a lot of demand for ports, especially for 100Gb links .  Port availability can fluctuate from day to day.
+There is a lot of demand for ports, especially for 100Gb links.  Port availability can fluctuate from day to day.
 
 There are only two ExpressRoute port speed offerings at this time - 10Gb and 100Gb.
 
@@ -13,8 +13,8 @@ There are only two ExpressRoute port speed offerings at this time - 10Gb and 100
 The output is a list of objects with the following properties:
 
 * **Location** *(string)* : The "official" port name for the location, like `Equinix-Paris-PA4`
-* **10Gb** *(bool)* : Set to `true` if the location has at least one 10Gb port available for connections, otherwise set to `false`
-* **100Gb** *(bool)* : Set to `true` if the location has at least one 100Gb port available for connections, otherwise set to `false`.
+* **10Gbps** *(bool)* : Set to `true` if the location has at least one 10Gb port available for connections, otherwise set to `false`
+* **100Gbps** *(bool)* : Set to `true` if the location has at least one 100Gb port available for connections, otherwise set to `false`.
 
 ## How to use
 
