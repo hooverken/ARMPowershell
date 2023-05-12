@@ -10,8 +10,13 @@ The output is a list of objects with the following properties:
 * **10Gb** *(bool)* : Set to `true` if the location has at least one 10Gb port avaialble for connections, othewrwise set to `false`
 * **100Gb** *(bool)* : Set to `true` if the location has at least one 100Gb port avaialble for connections, otherwise set to `false`.
 
-** Example
+
+## How to use
+
+Make sure you are authenticated to Azure using `Connect-AzAccount` and just run the script.  I don't believe any special permissions are required.  It doesn't take any parameters at this time because I'm keeping it simple.
+
+## Example
 
 This screenshot shows how you can filter the output by only returning records where the location name starts with a specific telecom provider.
 
-![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/Configure-AzFilesShareForMSIXAppAttach/Configure-AzFilesShareForMSIXAppAttach.PNG)
+![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/Get-ExpressRouteLocationSpeedOfferings/Get-ExpressRouteLocationSpeedOfferings.png)
