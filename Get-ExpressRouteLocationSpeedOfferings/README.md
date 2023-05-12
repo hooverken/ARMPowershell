@@ -1,10 +1,12 @@
 # Get-ExpressRouteLocationSpeedOfferings.ps1
 
-This script walks through the list of ExpressRoute providers and locations to see which provider has which port speeds available in which locations.  
+This script walks through the list of [ExpressRoute connectivity providers](https://learn.microsoft.com/azure/expressroute/expressroute-locations-providers) and locations to see which provider has which port speeds available in which locations.  This is mainly useful when planning an [Expressroute Direct](https://learn.microsoft.com/azure/expressroute/expressroute-erdirect-about) connection.
 
-There is a lot of demand for ports, especially for 100Gb links.  Port availability can fluctuate from day to day.
+Each location is served by one or more connectivity providers.  **In general**, you should select an ExpressRoute location which is close to your primary site to minimize latency (and ISP costs) and maximize throughput.
 
-There are only two ExpressRoute port speed offerings at this time - 10Gb and 100Gb.
+There are two ExpressRoute port speed offerings at this time - 10Gb and 100Gb.
+
+There is high demand for 100Gbps ports, expecially in the continental US.  Port availability fluctuates from day to day as customers claim ports and capacity is added.  If you require a port in a specific location and the desired port speed is not available, open a support ticket for assistance. Microsoft is constantly adding capacity and may be able to help you.
 
 > It's important to understand that the bandwidth of an ExpressRoute circuit is configured **separately** from the link speed of the physical port provided by the ISP.  For example, you can attach using a 10Gb port and have your ExpressRoute circuit bandwidth set to 5Gb.
 
