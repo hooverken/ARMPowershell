@@ -17,25 +17,3 @@ Each Azure subscription has its own logical mapping of availability zone numbers
 ## What about Proximity Placement Groups?
 
 You may be using [Proximity Placement Groups (PPG's)](https://learn.microsoft.com/en-us/azure/virtual-machines/co-location) to make sure that your Azure resources are located within the same building in the Azure region since this can have significant performance advantages.  This is fine within the context of a single subscription but PPG's are limited to a single subscription in scope so you can't have resources in different subscriptions using the same PPG.
-
-## Output
-
-The output is currently very basic - just a few lines of text which show what AZ numbers in the current subscription map to which AZ numbers in the target subscription.  I plan to improve this in the future to make it more ueful for automation.
-
-
-
-## Don't forget about PPG's
-
-When deploying
-
-## How to use
-
-Make sure you are authenticated to Azure using `Connect-AzAccount` and just run the script.  I don't believe any special permissions are required.  It doesn't take any parameters at this time because I'm keeping it simple.
-
-The script can take several seconds to complete - be patient.
-
-## Example
-
-This screenshot shows how you can filter the output by only returning records where the location name starts with a specific telecom provider.
-
-![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/Get-ExpressRouteLocationSpeedOfferings/Get-ExpressRouteLocationSpeedOfferings.png)
