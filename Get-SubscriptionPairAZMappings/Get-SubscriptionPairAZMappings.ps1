@@ -61,13 +61,12 @@ $uri = "https://management.azure.com/subscriptions/$mySubscriptionId/providers/M
 $result = Invoke-RestMethod -Method POST -uri $uri -Headers $headers -Body ($body | ConvertTo-Json) -ContentType "application/json"
 
 $result.availabilityZonePeers | % { 
-    $myAzNumber = $_.availabilityZone
-    $otherAzNumber = $_.peers[0].availabilityZone
+    
     $o = New-Object -typename psobject
-    $o | Add-Member -MemberType NoteProperty -Name "subscriptionId" -Value $mySubscriptionId
-    $o | Add-Member -MemberType NoteProperty -Name "localAzNumber" -Value $myAzNumber
-    $o | Add-Member -MemberType NoteProperty -Name "remoteSubscriptionId" -Value $targetSubscriptionId
-    $o | Add-Member -MemberType NoteProperty -Name "remoteAzNumber" -Value $otherAzNumber
+    $o | Add-Member -MemberType NoteProperty -Name "localSubscriptionId" -Value $mySubscriptionId
+    $o | Add-Member -MemberType NoteProperty -Name "localAzNumber" -Value $_.availabilityZone
+    $o | Add-Member -MemberType NoteProperty -Name "targetSubscriptionId" -Value $targetSubscriptionId
+    $o | Add-Member -MemberType NoteProperty -Name "targetAzNumber" -Value $_.peers[0].availabilityZone
 
     $o
 }
