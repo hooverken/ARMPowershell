@@ -12,7 +12,7 @@ For example, if I have a pool of 50 VM's that are part of a single application, 
 
 ## Why you might need this script
 
-Each Azure subscription has its own logical mapping of availability zone numbers to the underlying physical zones.  This means that what subscription A sees as zone 1 could be the same Azure datacenter as what subscription B sees as zone 2.  If you don't know which zones in subscription A map to which zones in subscription B, you could end up with all of your workload in a single physical zone which would defeat the purpose of using availability zones in the first place.
+Each Azure subscription has **its own logical mapping** of availability zone numbers to the underlying physical zones.  This means that what subscription A sees as zone 1 could be the same Azure datacenter as what subscription B sees as zone 2.  If you don't know which zones in subscription A map to which zones in subscription B, you could end up with all of your workload in a single physical zone which would defeat the purpose of using availability zones in the first place.
 
 ## What about Proximity Placement Groups?
 
