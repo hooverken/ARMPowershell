@@ -1,7 +1,8 @@
 # Get-SubscriptionPairAZMappings.ps1
-# by Ken Hoover
+# by Ken Hoover <moc.tfosorcim@revooh.nek>
+# May 2023
 
-# This script compares the availability zone mappings of the target subscription
+# This script compares the availability zone mappings of a target subscription
 # to those of the current subscription.
 
 # See the README in this folder to understand why this matters.
@@ -10,7 +11,8 @@
 [CmdletBinding()]
 
 param (
-    [Parameter(mandatory = $true )][string]$targetSubscriptionId
+    [Parameter(mandatory = $true )][string]$targetSubscriptionId,
+    [Parameter(mandatory = $false)][string]$region
 )
 
 
@@ -53,7 +55,7 @@ $headers.add("Content-Type","application/json")
 $headers.add("Authorization",(Get-AzBearerToken))
 
 $body = @{}
-$body.Add("location","eastus")
+$body.Add("location",$region)
 $body.Add("subscriptionIds",$subscriptionsList)
 
 $uri = "https://management.azure.com/subscriptions/$mySubscriptionId/providers/Microsoft.Resources/checkZonePeers/?api-version=2020-01-01"
@@ -61,8 +63,9 @@ $uri = "https://management.azure.com/subscriptions/$mySubscriptionId/providers/M
 $result = Invoke-RestMethod -Method POST -uri $uri -Headers $headers -Body ($body | ConvertTo-Json) -ContentType "application/json"
 
 $result.availabilityZonePeers | % { 
-    
+
     $o = New-Object -typename psobject
+    $o | add-member -MemberType NoteProperty -Name "localRegion" -Value $_.location
     $o | Add-Member -MemberType NoteProperty -Name "localSubscriptionId" -Value $mySubscriptionId
     $o | Add-Member -MemberType NoteProperty -Name "localAzNumber" -Value $_.availabilityZone
     $o | Add-Member -MemberType NoteProperty -Name "targetSubscriptionId" -Value $targetSubscriptionId
