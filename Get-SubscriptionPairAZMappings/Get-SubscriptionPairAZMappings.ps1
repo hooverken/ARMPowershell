@@ -63,5 +63,11 @@ $result = Invoke-RestMethod -Method POST -uri $uri -Headers $headers -Body ($bod
 $result.availabilityZonePeers | % { 
     $myAzNumber = $_.availabilityZone
     $otherAzNumber = $_.peers[0].availabilityZone
-    write-output "AZ $myAzNumber for subscription $mySubscriptionId is AZ $otherAzNumber for subscription $targetSubscriptionId"
+    $o = New-Object -typename psobject
+    $o | Add-Member -MemberType NoteProperty -Name "subscriptionId" -Value $mySubscriptionId
+    $o | Add-Member -MemberType NoteProperty -Name "localAzNumber" -Value $myAzNumber
+    $o | Add-Member -MemberType NoteProperty -Name "remoteSubscriptionId" -Value $targetSubscriptionId
+    $o | Add-Member -MemberType NoteProperty -Name "remoteAzNumber" -Value $otherAzNumber
+
+    $o
 }

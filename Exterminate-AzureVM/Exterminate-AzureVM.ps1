@@ -1,12 +1,11 @@
 # Exterminate-AzureVM.ps1
+# by Ken Hoover <ken.hoover@microsoft.com>
+# January 2021
 
 # Deletes all components of the target VM -- compute, OS disk, data disk(s) and NIC(s)
 # Does NOT ask for confirmation.  Make sure you know what you're doing!
 
-# by Ken Hoover <ken.hoover@microsoft.com>
-# January 2021
-
-# TODO / Future Enhancement:  Include deleting public IP's associated with the VM.
+# TODO / Future Enhancement:  Include deleting public IP's associated with the VM?
 
 [CmdletBinding()]
 param(
@@ -21,6 +20,8 @@ if (!($vm)) {
 }
 
 $RGname = $vm.ResourceGroupName
+
+# Identify network interfaces associated with the VM
 $networkProfile = $vm.NetworkProfile
 if ($networkProfile.NetworkInterfaces.count -ge 2) {
     $nics = @()
@@ -31,7 +32,7 @@ if ($networkProfile.NetworkInterfaces.count -ge 2) {
     $nics = Get-AzNetworkInterface -ResourceId $vm.NetworkProfile.NetworkInterfaces.id
 }
 
-
+# Identify all disks associated with the VM
 $storageProfile = $vm.StorageProfile
 $osdisk = $storageProfile.OsDisk
 if ($StorageProfile.DataDisks.count -ge 2) {
@@ -45,6 +46,7 @@ if ($StorageProfile.DataDisks.count -ge 2) {
     }
 }
 
+# Start exterminating stuff
 Write-host "Removing compute resource $virtualMachineName..."
 Remove-AzVm -Name $vm.Name -ResourceGroupName $vm.ResourceGroupName -Verbose -Force
 
