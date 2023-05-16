@@ -65,7 +65,7 @@ $result = Invoke-RestMethod -Method POST -uri $uri -Headers $headers -Body ($bod
 $result.availabilityZonePeers | % { 
 
     $o = New-Object -typename psobject
-    $o | add-member -MemberType NoteProperty -Name "localRegion" -Value $_.location
+    $o | add-member -MemberType NoteProperty -Name "localRegion" -Value $region
     $o | Add-Member -MemberType NoteProperty -Name "localSubscriptionId" -Value $mySubscriptionId
     $o | Add-Member -MemberType NoteProperty -Name "localAzNumber" -Value $_.availabilityZone
     $o | Add-Member -MemberType NoteProperty -Name "targetSubscriptionId" -Value $targetSubscriptionId
