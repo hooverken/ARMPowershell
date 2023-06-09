@@ -105,7 +105,7 @@ do {
 
 # To make sure things have settled, use the application ID to look up the app in the other direction
 do {
-    Write-Verbose ("Waiting 30s for AAD propagation...")
+    Write-Verbose ("App registration is confirmed in AAD.  Waiting 30s more for AAD propagation before proceeding...")
     Start-Sleep -Seconds 30
 } until ($null -ne (Get-AzADApplication -ApplicationId $application.AppId))
 
