@@ -104,6 +104,14 @@ $requiredModules | ForEach-Object {
 
 # The ActiveDirectory Module
 if (-not (Get-Module -Name ActiveDirectory -ListAvailable)) {
+
+    # This stuff requires administrator privileges so check if we are in an admin context first.
+    if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+        Write-Warning("Required components are missing from this system and script is not running in an administrator context.  Please -re-run this script from an elevated Powershell session.")
+        exit
+    } else {
+        Write-Verbose ("Administrator context verified.")
+    }
     Write-Host "The ActiveDirectory module is not installed.  Installing with DISM.  This may take a few minutes."
     $result = DISM.exe /Online /Get-Capabilities | select-string "Rsat.Active"
 
