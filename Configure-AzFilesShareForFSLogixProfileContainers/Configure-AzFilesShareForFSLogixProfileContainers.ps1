@@ -1,7 +1,7 @@
 # Configure-AzFilesPermissionsForFSLogixProfileContainers.ps1
 # by Ken Hoover <ken dot hoover at microsoft dotcom>
 # Original version April 2021
-# Last update Feb 2023
+# Last update Jul 2023
 
 # This script configures an Azure Files share to hold FSLogix profiles
 # If the share name specified is not present on the storage account, it will be created.
@@ -25,7 +25,7 @@
 #               Gracefully deal with pre-existing SMB mappings to same server - unlikely but possible, especially when testing
 # 27 Feb 2023 : (logic fix) Simpler logic for checking if a SMB mapping to the storage account already exists
 # 23 Mar 2023 : (BUGFIX) Force UPN suffix for user in context to lowercase when matching to avoid issues with AAD domain name check
-
+# 05 Jul 2023 : Clean up logic and improve error output related to verification that user domain is also one of the tenant's domains.
 <#
 .SYNOPSIS
 
@@ -100,6 +100,8 @@ if ($null -eq $currentContext) {
         Write-Error "No Azure context present.  Please verify that you have authenticated correctly using Connect-AzAccount"
         exit
     }
+} else { 
+    Write-Verbose ("Connected to Subscription " + $currentContext.Subscription.Id + " as " + $currentContext.Account.Id)
 }
 
 # If the user authenticated to Azure using a SP then the account name will be a GUID (the application ID)
@@ -110,13 +112,19 @@ if ($currentContext.Account.Id -match $guidMatchRegEx) {
     exit
 }
 
-# This looks to see if the user's UPN suffix is in the list of domains for the tenant.
+# This verifies that the user's UPN suffix is in the list of domains for the tenant.
+# A mismatch here can break AD lookups.
 $userdomain = $currentContext.Account.Id.split('@')[1].tolower()  # UPN suffix of the authenticated user.
-if ($null -eq (Get-AzTenant -ErrorAction SilentlyContinue | Where-Object { $_.Domains.Contains($userdomain)})) {
-    Write-Warning "Azure AD information not available, cannot proceed."
-    exit
+if ($tenantinfo = (Get-AzTenant -ErrorAction SilentlyContinue)) {
+    if (!($tenantinfo.Domains.Contains($userdomain)) ) {
+        Write-Warning "User's UPN suffix ($userdomain) is not in the list of verified domains for the current tenant. Cannot proceed."
+        exit
+    } else {
+        Write-Verbose ("Connection to AAD tenant name " + (Get-AzTenant | Where-Object { $_.domains.contains($userdomain)}).name  + " verified.")
+    }
 } else {
-    Write-Verbose ("Connection to AAD tenant name " + (Get-AzTenant | Where-Object { $_.domains.contains($userdomain)}).name  + " verified.")
+    Write-Warning "Get-AzTenant failed while validating AAD domains. Cannot proceed."
+    exit
 }
 
 # Confirm that the storage account specified actually exists, that we can connect to it and grab the name of the RG that it's in.  
@@ -277,6 +285,9 @@ $acl = Get-Acl $driveLetter
 # The general idea is that you want to allow for users to create their own profiles, but you want 
 # to make sure that people don't have the ability to touch VHD's created by other users while 
 # preserving the rights of Admins to manage the share.
+
+# icacls <mounted-drive-letter>: /grant <user-email>:(M)
+# icacls <mounted-drive-letter>: /grant "Creator Owner":(OI)(CI)(IO)(M)
 
 Write-Verbose ("... Removing `"NT AUTHORITY\Authenticated Users`"" )
 $authenticatedUsersWellKnownSID = "S-1-5-11"  # the well-known SID for "Authenticated Users"

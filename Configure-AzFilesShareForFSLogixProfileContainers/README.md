@@ -18,7 +18,7 @@ The following things should be true of the system that you are using to run the 
     * The name of an **AD group for unprivileged users that will access the share** in an ordinary capacity (e.g. nonprivileged users).  This group will be assigned the built-in Azure role `Storage File Data SMB Share Contributor` which allows basic CRUD actions on files inside the share.
     * The name of an **AD group for privileged users** (e.g. admins).  These users will be able to work with other users' profile VHDs.  This group will be assigned the built-in Azure role `Storage File Data SMB Share Elevated Contributor` which allows them to perform all operations on the share.
 2. Connect to Azure with `Connect-AzAccount` as a user with permission to configure the target storage account
-3. Run the script using a command line like this one<br>`Configure-AzStorageAccountForADDSSuthN.ps1 -storageAccountName "myStorageAccount" -profileSharename myprofiles -userGroup "MyUsers" -adminGroup "MyAdmins" -Verbose`
+3. Run the script using a command line like this one<br>`Configure-AzStorageAccountForADDSAuthN.ps1 -storageAccountName "myStorageAccount" -profileShareName myprofiles -ShareUserGroupName "MyUsers" -ShareAdminGroupName "MyAdmins" -Verbose`
 
 Using the `-Verbose` parameter will show detailed progress of the script as it runs.
 
