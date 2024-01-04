@@ -31,8 +31,8 @@ Before starting, make sure you have the following:
 * Gather the necessary files together into a directory:
     * The `ScheduledFileMoveToAzure.ps1` file
     * The `AzCopy.exe` executable (or confirm that it's executable via the path)
-    * The `PFX`` file with the SP's certificate and private key in it
-    * The `XML`` file with the application ID of the SP and the password for the PFX file.
+    * The `PFX` file with the SP's certificate and private key in it
+    * The `XML` file with the application ID of the SP and the password for the PFX file.
 * Create a subdirectory named `AzCopyLogs`.  This is where the logs from the runs will be stored:
     * *Tip:  Set this directory to have NTFS compression enabled since the (text) log files are chatty.  Also consider pruning the directory periodically to keep it from growing too large and causing problems.*
 * Run the script by providing the parameters via the command line.
