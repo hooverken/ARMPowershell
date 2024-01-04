@@ -10,7 +10,7 @@ Authentication uses an EntraID (Azure AD) Service Principal.
 
 Before starting, make sure you have the following:
 
-- Download the **AzCopy** tool
+- Download the **(AzCopy)[https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10]** tool
 - Identify the user account that will "own" the scheduled task on the machine that will run the job.  This can be a local or domain account.
 
 ## Setting Up
