@@ -21,32 +21,20 @@ Before starting, make sure you have the following:
 * Export the self-signed certificate created for the SP into a .PFX file with a robust password.
 
 ### On the machine that will run the scheduled task:
-* Export the self-signed certificate that was created for for the service principal into a `.pfx` file with a robust password.
-
-### Creating the scheduled task
-
-#### Gather the following things
-
-1. The tenant ID of your Azure environment
-2. The name of the target storage account
-3. The name of the target blob container
-4. The .pfx file containing the certificate for the service principal that you created above
-5. The full directory path that files will be moved from
-6. How old (in days) files should be in order to be moved, such as 90 days
-7. The AzCopy.exe file
+* Use [this process from the Powershell Cookbook](https://powershellcookbook.com/recipe/PukO/securely-store-credentials-on-disk) to create a XML file which has the **application ID of the service principal you created** as the username and the **encrypted password for the .PFX file** that you created above as the password.
 
 > The AzCopy.exe utility must be in the same directory as the script.
 
-#### TEST with an interactive execution of the script.
+#### TEST by executing the script interactively
 
-* Make sure you're logged in as the user that will "own" the scheduled task.
-* Gather the necessary files together in the sam directory:
+* Make sure you're logged in as the user that will "own" the scheduled task.  This user must also have created the XML file with the credentials in it.
+* Gather the necessary files together into a directory:
     * The `ScheduledFileMoveToAzure.ps1` file
     * The `AzCopy.exe` executable (or confirm that it's executable via the path)
-    * The PFX file with the SP's certificate and private key in it
-    * The XML file with the application ID of the SP and the password for the PFX file.
+    * The `PFX`` file with the SP's certificate and private key in it
+    * The `XML`` file with the application ID of the SP and the password for the PFX file.
 * Create a subdirectory named `AzCopyLogs`.  This is where the logs from the runs will be stored:
-    * Recommendation:  Set this directory to have NTFS compression enabled since the (text) log files are chatty.  Also consider pruning it periodically.
+    * *Tip:  Set this directory to have NTFS compression enabled since the (text) log files are chatty.  Also consider pruning the directory periodically to keep it from growing too large and causing problems.*
 * Run the script by providing the parameters via the command line.
     * *Tip:  Use a text editor like Notepad to assemble the parameters and then paste them into the Powershell window.*
 
@@ -59,15 +47,14 @@ Example command line:
 ### Create the scheduled task
 
 1. Log into the machine that will run the scheduled task as the user that will "own" the task in the Scheduler.
-2. Use [this process from the Powershell Cookbook](https://powershellcookbook.com/recipe/PukO/securely-store-credentials-on-disk) to create a credentials file which has the **application ID of the service principal you created** as the username and the **password for the .PFX file containing the certificate** as the password.
-3. Open the task scheduler, right-click on "Task Scheduler Library" and select "Create Basic Task..."
-4. On the first screen, give the task a descriptive name like "Nightly File archive to Azure"
-5. On the `Trigger` Screen, select the interval you want for the move to occur, such as `Daily`, and configure the interval as needed.
-6. On the `Action` screen, choose `Start a Program` and enter the following:
+2. Open the task scheduler, right-click on "Task Scheduler Library" and select "Create Basic Task..."
+3. On the first screen, give the task a descriptive name like "Nightly File archive to Azure"
+4. On the `Trigger` Screen, select the interval you want for the move to occur, such as `Daily`, and configure the interval as needed.
+5. On the `Action` screen, choose `Start a Program` and enter the following:
     * For "Program/Script", browse to and select the script
     * For "Add Arguments(Optional)" add the parameters the script needs (see below)
     * For "Start In (optional)" paste in the full path to the directory where the script, .pfx file and the .xml file are located.
-7. Hit "Finish" when everything looks correct.
+6. Hit "Finish" when everything looks correct.
 
 You can test the script by simply running the scheduled task.
 
@@ -76,6 +63,8 @@ You can test the script by simply running the scheduled task.
 To test the script, simply run the scheduled task.  The script does a bit of setup and then invokes AzCopy to do the file moves.
 
 AzCopy will create a log every time it runs in a subdirectory called `AzCopyLogs` so check there to verify which files were copied during a particular run.
+
+ > Note about the encrypted credentials file:  The XML file that is created can only be decrypted by the **same user** that created it **on the same machine** that it was created on so it is not portable from machine to machine - you will need to repeat the process to move this to a new machine even if the username/password are the same.
 
 ## License
 
