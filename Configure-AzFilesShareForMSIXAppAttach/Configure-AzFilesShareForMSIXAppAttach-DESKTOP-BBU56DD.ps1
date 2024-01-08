@@ -247,7 +247,7 @@ $acl.purgeAccessRules($identityReference)
 # Add the AAD group for elevated users
 write-verbose ("... Adding `"$appAttachADUsersGroup`" (ReadAndExecute)")
 $rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $appAttachADUsersGroupObj.SID, "ReadAndExecute", "ContainerInherit, ObjectInherit", "InheritOnly", "Allow"
-Group$acl.SetAccessRule($rule)
+$acl.SetAccessRule($rule)
 
 # Add the AAD group for normal users
 write-verbose ("... Adding `"$appAttachADComputersGroup`" (ReadAndExecute)")
