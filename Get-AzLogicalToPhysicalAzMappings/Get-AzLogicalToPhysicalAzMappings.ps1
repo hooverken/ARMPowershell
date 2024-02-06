@@ -1,10 +1,27 @@
+# Get-AvdHostPoolBilledCharges.ps1
+# by Ken Hoover <kenhoo veratmic rosoft dotcom>
+# February 2024
+
+# Takes a subscription ID and a region name as parameters and returns the mappings of 
+# logical to physical AZ's for that subscriuption in the specified region.
+
+# Output example:
+
+# logicalZone physicalZone
+# ----------- ------------
+# 1           eastus-az1
+# 2           eastus-az3
+# 3           eastus-az2
+
+# See README for more information.
+
 [CmdletBinding()]
 param (
     [Parameter(mandatory = $true)][string]$subscriptionId,
     [Parameter(mandatory = $true)][string]$region
 )
 
-# Make sure the user antered a valid location
+# Make sure the user entered a valid location
 if ((Get-Azlocation).Location -notcontains $region) {
     Write-Error "Invalid region: $region"
     exit
