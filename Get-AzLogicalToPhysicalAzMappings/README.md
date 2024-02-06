@@ -6,7 +6,7 @@ Because the mappings of "logical" availability zones are randomized for each sub
 
 This script takes a subscription ID and region name as a parameter and returns what the "actual" AZ is that is mapped to the subscription.
 
-Not all AZs are created equal so if you're not sure then a Support ticket can get you some gu8idance on what zone you should be using.
+Not all AZs are created equal so if you're not sure then a Support ticket can get you some guidance on what zone you should be using.
 
 ## Example:
 
