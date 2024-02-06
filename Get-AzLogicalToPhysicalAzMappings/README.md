@@ -12,4 +12,4 @@ Not all AZs are created equal so if you're not sure then a Support ticket can ge
 
 `.\Get-AzLogicalToPhysicalAzMappings.ps1 -subscriptionId $mySubscriptionId -region eastus`
 
-![Example](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/Get-AvdHostPoolBilledCharges/Get-AvdHostPoolBilledCharges-Output-Screeenshot.png)
+![Example](https://github.com/hooverken/ARMPowershell/blob/main/Get-AzLogicalToPhysicalAzMappings/example.png?raw=true)
