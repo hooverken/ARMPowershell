@@ -8,7 +8,7 @@ Each folder has a README with details about the script(s) in that folder.
 
 | Folder or File Name | Description |
 --------------------- | ------------ |
-| **Get-AzLogicalToPysicalAzMappings** | Shows what the mappings are between a subscription's AZ's and the actual AZ names for the region |
+| **Get-AzLogicalToPysicalAzMappings** | Shows what the mappings are between a subscription's AZ's and the actual AZ names for the region.  This is discussed [here](https://learn.microsoft.com/azure/reliability/availability-zones-overview?tabs=azure-cli#physical-and-logical-availability-zones) in Microsoft's documentation. |
 | **Configure-AzStorageAccountForADDSAuthN.ps1** | Configures an Azure storage account to use [Active Directory (ADDS) authentication](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-identity-auth-active-directory-enable) |
 |**Configure-AzFilesShareForFSLogixProfileContainers.ps1** | Sets up a file share on an Azure storage account and configures it for use with [FSlogix profile containers](https://docs.microsoft.com/en-us/azure/virtual-desktop/fslogix-containers-azure-files) |
 | **Configure-AzFilesShareForMSIXAppAttach.ps1** | Configures an Azure Files share permissions for use with [MSIX App Attach](https://docs.microsoft.com/en-us/azure/virtual-desktop/what-is-app-attach) and [Azure Virtual Desktop](https://azure.microsoft.com/en-us/services/virtual-desktop/) |
