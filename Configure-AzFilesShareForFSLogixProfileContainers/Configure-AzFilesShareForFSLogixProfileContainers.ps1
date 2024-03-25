@@ -158,6 +158,7 @@ if ($storageAccount) {
 if ($false -eq $storageaccount.AllowSharedKeyAccess) {
     Write-Warning ("Storage account " + $storageAccount.StorageAccountName + " is configured to deny shared key access.")
     Write-Warning ("Please enable shared key access to this account before running this script.")
+    Write-Warning ("After this script runs successuflly you can disable shared key access again.")
     exit
 }
 

@@ -6,7 +6,7 @@
 # Based on work by John Kelbley <johnkel at Microsoft dotcom>
 
 # initial release April 2021
-# last update Oct 2022
+# last update March 2024
 
 ###############################################################################################################
 #  This is the "Manual" process to configure AD authentication for Azure Files, automated!
@@ -25,7 +25,7 @@
 # CHANGELOG
 # 13 May 2021 : Check for AD enabled status before doing anything and removed storageAccountRGName variable
 # 21 Sep 2022 : Powershell 7 now required
-#               storage account length constraint enforced by parameter validation
+#               Storage account length constraint enforced by parameter validation
 #               Reduced number of modules required to function (Az.Accounts, Az.Resources, Az.Storage)
 #               Auto-install of missing modules
 #               Installs RSAT tools if not present (needed for ActiveDirectory module)
@@ -38,7 +38,11 @@
 # 18 Oct 2022 : Prompt for connection to Azure if Get-AzContext fails so we don't confuse the user
 #                 by making them re-run the script, especially if the necessary PS modules had to be
 #                 installed.
-# 26 Jan 2023 : [BUG] Add explicit connect to AD domain controller based on a search for AD Web Services.  This
+# 26 Jan 2023 : [BUG] Add explicit connect to AD domain controller based on a lookup for AD Web Services
+# 22 Mar 2024 : Add check to see if running on a server or workstation before installing prerequisites.  This
+#               is needed because the way the Powershell AD module is installed is different for each 
+#               (Add-WindowsCapability for workstations and Add-WindowsFeature for servers).  Also switch from
+#               using DISM to native Powershell to install the necessary capabilities/features.
 
 <#
 .SYNOPSIS
@@ -89,9 +93,11 @@ param(
 
 # Check as many of the prerequisites as we can before we do anything.
 
+Write-Verbose ("Checking environment.")
+
 # Verify that the required Powershell modules are installed.  If not, install them.
 
-Write-Verbose ("Verifying that the necessary Azure Powershell modules are present.")
+Write-Verbose ("Verifying that necessary Azure Powershell modules are present.")
 $requiredModules = @("Az.Accounts", "Az.Storage", "Az.Resources")
 $requiredModules | ForEach-Object {
     if (-not (Get-Module -Name $_ -ListAvailable)) {
@@ -102,47 +108,74 @@ $requiredModules | ForEach-Object {
     }
 }
 
-# The ActiveDirectory Module
-if (-not (Get-Module -Name ActiveDirectory -ListAvailable)) {
+# Make sure ActiveDirectory moduole is present.  This requires some features/capabilities to be installed on the system.
+# This is done differently on a server vs a workstation (Client)
 
-    # This stuff requires administrator privileges so check if we are in an admin context first.
-    if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-        Write-Warning("Required components are missing from this system and script is not running in an administrator context.  Please -re-run this script from an elevated Powershell session.")
-        exit
-    } else {
-        Write-Verbose ("Administrator context verified.")
-    }
-    Write-Host "The ActiveDirectory module is not installed.  Installing with DISM.  This may take a few minutes."
-    $result = DISM.exe /Online /Get-Capabilities | select-string "Rsat.Active"
+$WindowsInstallationType = (Get-ComputerInfo).WindowsInstallationType
 
-    # The ActiveDirectory RSAT package has a dependency on the ServerManager package so we might need to install 
-    # ServerManager first.
-    
-    $ServerManagerCapability = "Rsat.ServerManager.Tools~~~~0.0.1.0"
-    $ActiveDirectoryRSatModuleCapability = "Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0"
+Write-Verbose ("Windows installation type is `"" + $WindowsInstallationType + "`".")
+if ($WindowsInstallationType -ne "Server" -and ($WindowsInstallationType -ne "Client")) {
+    Write-Warning ("Unknown WindowsInstallationType value `"$WindowsInstallationType`".  This script may not function correctly.")
+}
 
-    if (-not (($result.toString().contains($ServerManagerCapability)) -and ($result.toString().contains($ActiveDirectoryRSatModuleCapability)))) {
-        Write-warning("The ActiveDirectory Powershell module is not present.")
-        $result = DISM.exe /Online /Get-CapabilityInfo /CapabilityName:$ServerManagerCapability
-        if ($result.contains("State : Installed")) {
-            Write-Host "Installing ActiveDirectory RSAT tools with DISM."
-            DISM.exe /Online /Add-Capability /CapabilityName:$ActiveDirectoryRSatModuleCapability /NoRestart
+if ($WindowsInstallationType -eq "Server") {
+
+    # Server Manager is present by default on a Windows Server (I hope!)
+    # Therefore all we need to do is see if the ADDS Powershell module is installed.
+
+    if (((Get-WindowsFeature -Name RSAT-AD-PowerShell).InstallState) -ne "Installed") {
+        Write-Verbose ("Installing Active Directory Powershell.  This may take a moment.")
+        $result = Add-WindowsFeature RSAT-AD-PowerShell
+        if ($result.success) {
+            Write-Verbose ("Active Directory Powershell module installed.")
         } else {
-            Write-Host "Installing ServerManager and ActiveDirectory RSAT tools with DISM."
-            DISM.exe /Online /Add-Capability /CapabilityName:$ServerManagerCapability /NoRestart
-            DISM.exe /Online /Add-Capability /CapabilityName:$ActiveDirectoryRSatModuleCapability /NoRestart
+            Write-Error ("Unable to install the AD Powershell module.  Please install it manually and try again.")
+            exit
+        }
+        if ($result.RestartNeeded -ne "No") { 
+            # This can be "Yes", "No" or "Maybe" (if a restart is pending but not required)
+            Write-Warning ("Installer recommends a restart to complete the installation.")
+        } else {
+            Write-Verbose ("No restart required.")
+        }
+    }
+} else {
+    # This is a workstation (Client) so the required tools are different.
+
+    $serverManagerCapabilityName = "Rsat.ServerManager.Tools~~~~0.0.1.0"
+    $ActiveDirectoryRsatModuleCapabilityName = "Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0"
+
+    $serverManagerPresent= (Get-WindowsCapability -Name $serverManagerCapabilityName -Online).state -eq "Installed"
+    $ActiveDirectoryRsatPresent = (Get-WindowsCapability -Name $ActiveDirectoryRsatModuleCapabilityName -Online).state -eq "Installed"
+
+    if (-not ($serverManagerPresent)) {
+        Write-Warning ("Server Manager not installed.  Installing...")
+        $result = Add-WindowsCapability -Online -Name $ServerManagerCapabilityName
+        if ($result.RestartNeeded -ne "No") { # This can be "Yes", "No" or "Maybe" (if a restart is pending but not required)
+            Write-Warning ("A restart is recommended to complete the installation of the ServerManager feature.")
         }
     } else {
-        write-verbose "Module ActiveDirectory is present."
+        Write-Verbose ("Server Manager is present.")
+    }
+
+    if (-not ($ActiveDirectoryRsatPresent)) {
+        Write-Warning "Active Directory RSAT tools not installed.  Installing..."
+        $result = Add-WindowsCapability -Online -Name $ActiveDirectoryRSatModuleCapabilityName
+        if ($result.RestartNeeded -ne "No") {
+            Write-Warning ("A restart is recommended to complete the installation of the Active Directory RSAT tools.")
+        }
+    } else { 
+        write-verbose ("Active Directory RSAT tools are present.")
     }
 }
 
 # Make sure we are connected to Azure
+# Using device AuthN to keep things simpler/clearer for the user.
 $currentContext = Get-AzContext -ErrorAction SilentlyContinue
 if ($null -eq $currentContext) {
     write-warning ("Not connected to Azure (no context)`nPlease connect to Azure with Connect-AzAccount.")
     if (Get-Command -Module Az.Accounts Connect-AzAccount) {
-        Connect-AzAccount
+        Connect-AzAccount -UseDeviceAuthentication
     } else {
         Write-Error "The Az.Accounts module is not installed.  Please install it and try again."
         exit 
@@ -160,26 +193,27 @@ if (-not ($Domain = Get-ADDomain -Identity $ADDomainFQDN -Credential $Credential
 # verify that there is a DC running AD Web Services that we can talk to (AD Cmdlets require this)
 $domainControllerIpAddress = (Get-ADDomainController -Discover -Service ADWS -DomainName $ADDomainFQDN).IPv4Address
 if (!($domainControllerIpAddress)) { 
-	write-error ("Can't find a domain controller running AD Web Services for domain $ADDomainFQDN!")
+	write-error ("Can't find a domain controller running AD Web Services for domain $ADDomainFQDN.  This is necessary for this script to function.")
+    Write-Error ("See https://learn.microsoft.com/en-us/services-hub/unified/health/remediation-steps-ad/configure-the-active-directory-web-services-adws-to-start-automatically-on-all-servers for more information.")
 	exit
 }
 
 # Confirm that the storage account specified actually exists.
-# This method is inefficient and can take several seconds but doing it this way means that we don't need to ask 
-# the user for the RG name.
+# Yes, this method is inefficient and can take several seconds but doing it this way means that we don't need to ask the user for the RG name.
 # Since storage account names must be globally unique the chance of getting the "wrong" storage account from this is basically zero.
-write-verbose ("Verifying that $storageAccountName exists.  This may take a moment." )
+write-verbose ("Verifying that $storageAccountName exists in the current subscription.  This may take a moment." )
 $storageAccount = Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $storageAccountName}
 
 if ($null -ne $storageAccount) {
     # First make sure that this storage account is not already configured for ADDS.  If so, exit so we don't touch it.
-    Write-verbose "Checking to see if $storageAccountName is already configured for AD authentication..."
+    Write-verbose "Checking to see if $storageAccountName is already configured for AD authentication."
     if (($storageaccount.AzureFilesIdentityBasedAuth.DirectoryServiceOptions -eq "AD") -and `
         ($storageaccount.AzureFilesIdentityBasedAuth.ActiveDirectoryProperties.DomainName)) {
-        Write-Output ("Storage account $storageAccountName is configured to use domain " + ($storageaccount.AzureFilesIdentityBasedAuth.ActiveDirectoryProperties.DomainName + " for authentication."))
+        Write-Output ("Storage account $storageAccountName is configured to use a different domain " + ($storageaccount.AzureFilesIdentityBasedAuth.ActiveDirectoryProperties.DomainName + " for authentication."))
         exit 
     } else {
         # The storage account is not configured for ADDS
+        Write-Verbose ("Storage account $storageAccountName is not configured for AD authentication.")
         # Create a Kerb key for the storage account to use with ADDS
         write-verbose ("Creating Kerberos key for storage account $storageAccountName")
         New-AzStorageAccountKey -ResourceGroupName $storageaccount.ResourceGroupName -name $storageAccount.StorageAccountName -KeyName kerb1 | Out-Null
@@ -189,7 +223,7 @@ if ($null -ne $storageAccount) {
     }
 } else {
     # we didn't find the specified storage account name in the current scope.
-    Write-Warning ("Storage account $storageAccountName not found.  Are you looking in the correct subscription?")
+    Write-Warning ("Storage account $storageAccountName not found.")
     exit
 }
 
@@ -212,7 +246,7 @@ if (Test-NetConnection -ComputerName $fileEndpoint -Port 445 -InformationLevel Q
 # We should have pulled the domain info when we did the credential check above.
 
 $SPN = "cifs/$fileEndpoint"  # the SPN we will create for the computer account.  This should work everywhere (including gov cloud)
-Write-Verbose ("Active Directory SPN for this storage account will be set to $SPN")
+Write-Verbose ("Active Directory SPN for this storage account will be $SPN")
 
 # Make sure the target OU DN exists
 $domainName = $Domain.dnsroot
