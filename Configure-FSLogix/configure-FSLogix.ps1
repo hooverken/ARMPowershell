@@ -25,5 +25,5 @@ New-ItemProperty 'HKLM:\SOFTWARE\FSLogix\Profiles' -Name PreventLoginWithFailure
 New-ItemProperty 'HKLM:\SOFTWARE\FSLogix\Profiles' -Name SetTempToLocalPath -Type DWORD -Value 1 -Force
 
 # The file share path to look for the prodile VHD
-New-ItemProperty 'HKLM:\SOFTWARE\FSLogix\Profiles' -Name VHDLocations -type REG_SZ -Value $VHDLocations -Force
+New-ItemProperty 'HKLM:\SOFTWARE\FSLogix\Profiles' -Name VHDLocations -type String -Value $VHDLocations -Force
 
