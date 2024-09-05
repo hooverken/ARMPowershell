@@ -108,7 +108,7 @@ $requiredModules | ForEach-Object {
     }
 }
 
-# Make sure ActiveDirectory moduole is present.  This requires some features/capabilities to be installed on the system.
+# Make sure ActiveDirectory module is present.  This requires some features/capabilities to be installed on the system.
 # This is done differently on a server vs a workstation (Client)
 
 $WindowsInstallationType = (Get-ComputerInfo).WindowsInstallationType
