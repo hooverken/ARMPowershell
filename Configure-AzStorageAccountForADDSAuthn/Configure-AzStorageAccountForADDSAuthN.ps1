@@ -43,6 +43,8 @@
 #               is needed because the way the Powershell AD module is installed is different for each 
 #               (Add-WindowsCapability for workstations and Add-WindowsFeature for servers).  Also switch from
 #               using DISM to native Powershell to install the necessary capabilities/features.
+# 20 Feb 2025 : Add check to see if running as Administrator before checking for the ActiveDirectory module.  If
+#               not running as Administrator then skip the check.  If the module is not present the script will error out.
 
 <#
 .SYNOPSIS
@@ -118,54 +120,60 @@ if ($WindowsInstallationType -ne "Server" -and ($WindowsInstallationType -ne "Cl
     Write-Warning ("Unknown WindowsInstallationType value `"$WindowsInstallationType`".  This script may not function correctly.")
 }
 
-if ($WindowsInstallationType -eq "Server") {
-
-    # Server Manager is present by default on a Windows Server (I hope!)
-    # Therefore all we need to do is see if the ADDS Powershell module is installed.
-
-    if (((Get-WindowsFeature -Name RSAT-AD-PowerShell).InstallState) -ne "Installed") {
-        Write-Verbose ("Installing Active Directory Powershell.  This may take a moment.")
-        $result = Add-WindowsFeature RSAT-AD-PowerShell
-        if ($result.success) {
-            Write-Verbose ("Active Directory Powershell module installed.")
-        } else {
-            Write-Error ("Unable to install the AD Powershell module.  Please install it manually and try again.")
-            exit
-        }
-        if ($result.RestartNeeded -ne "No") { 
-            # This can be "Yes", "No" or "Maybe" (if a restart is pending but not required)
-            Write-Warning ("Installer recommends a restart to complete the installation.")
-        } else {
-            Write-Verbose ("No restart required.")
-        }
-    }
+# Check if we're running as Adminsitrator.  If not then we skip checking for these prereqs which might cause an error later on.
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)) {
+    Write-Warning ("This script is not running with elevated privileges.  This will cause errors if the ActiveDirectory module is not present.")
 } else {
-    # This is a workstation (Client) so the required tools are different.
+    # We are running elevated so we can check if the required modules are present.
+    if ($WindowsInstallationType -eq "Server") {
 
-    $serverManagerCapabilityName = "Rsat.ServerManager.Tools~~~~0.0.1.0"
-    $ActiveDirectoryRsatModuleCapabilityName = "Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0"
+        # Server Manager is present by default on a Windows Server (I hope!)
+        # Therefore all we need to do is see if the ADDS Powershell module is installed.
 
-    $serverManagerPresent= (Get-WindowsCapability -Name $serverManagerCapabilityName -Online).state -eq "Installed"
-    $ActiveDirectoryRsatPresent = (Get-WindowsCapability -Name $ActiveDirectoryRsatModuleCapabilityName -Online).state -eq "Installed"
-
-    if (-not ($serverManagerPresent)) {
-        Write-Warning ("Server Manager not installed.  Installing...")
-        $result = Add-WindowsCapability -Online -Name $ServerManagerCapabilityName
-        if ($result.RestartNeeded -ne "No") { # This can be "Yes", "No" or "Maybe" (if a restart is pending but not required)
-            Write-Warning ("A restart is recommended to complete the installation of the ServerManager feature.")
+        if (((Get-WindowsFeature -Name RSAT-AD-PowerShell).InstallState) -ne "Installed") {
+            Write-Verbose ("Installing Active Directory Powershell.  This may take a moment.")
+            $result = Add-WindowsFeature RSAT-AD-PowerShell
+            if ($result.success) {
+                Write-Verbose ("Active Directory Powershell module installed.")
+            } else {
+                Write-Error ("Unable to install the AD Powershell module.  Please install it manually and try again.")
+                exit
+            }
+            if ($result.RestartNeeded -ne "No") { 
+                # This can be "Yes", "No" or "Maybe" (if a restart is pending but not required)
+                Write-Warning ("Installer recommends a restart to complete the installation.")
+            } else {
+                Write-Verbose ("No restart required.")
+            }
         }
     } else {
-        Write-Verbose ("Server Manager is present.")
-    }
+        # This is a workstation (Client) so the required tools are different.
 
-    if (-not ($ActiveDirectoryRsatPresent)) {
-        Write-Warning "Active Directory RSAT tools not installed.  Installing..."
-        $result = Add-WindowsCapability -Online -Name $ActiveDirectoryRSatModuleCapabilityName
-        if ($result.RestartNeeded -ne "No") {
-            Write-Warning ("A restart is recommended to complete the installation of the Active Directory RSAT tools.")
+        $serverManagerCapabilityName = "Rsat.ServerManager.Tools~~~~0.0.1.0"
+        $ActiveDirectoryRsatModuleCapabilityName = "Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0"
+
+        $serverManagerPresent= (Get-WindowsCapability -Name $serverManagerCapabilityName -Online).state -eq "Installed"
+        $ActiveDirectoryRsatPresent = (Get-WindowsCapability -Name $ActiveDirectoryRsatModuleCapabilityName -Online).state -eq "Installed"
+
+        if (-not ($serverManagerPresent)) {
+            Write-Warning ("Server Manager not installed.  Installing...")
+            $result = Add-WindowsCapability -Online -Name $ServerManagerCapabilityName
+            if ($result.RestartNeeded -ne "No") { # This can be "Yes", "No" or "Maybe" (if a restart is pending but not required)
+                Write-Warning ("A restart is recommended to complete the installation of the ServerManager feature.")
+            }
+        } else {
+            Write-Verbose ("Server Manager is present.")
         }
-    } else { 
-        write-verbose ("Active Directory RSAT tools are present.")
+
+        if (-not ($ActiveDirectoryRsatPresent)) {
+            Write-Warning "Active Directory RSAT tools not installed.  Installing..."
+            $result = Add-WindowsCapability -Online -Name $ActiveDirectoryRSatModuleCapabilityName
+            if ($result.RestartNeeded -ne "No") {
+                Write-Warning ("A restart is recommended to complete the installation of the Active Directory RSAT tools.")
+            }
+        } else { 
+            write-verbose ("Active Directory RSAT tools are present.")
+        }
     }
 }
 
@@ -199,7 +207,8 @@ if (!($domainControllerIpAddress)) {
 }
 
 # Confirm that the storage account specified actually exists.
-# Yes, this method is inefficient and can take several seconds but doing it this way means that we don't need to ask the user for the RG name.
+
+# Yes, this method is inefficient and can take several seconds to complete but doing it this way means that we don't need to ask the user for the RG name.
 # Since storage account names must be globally unique the chance of getting the "wrong" storage account from this is basically zero.
 write-verbose ("Verifying that $storageAccountName exists in the current subscription.  This may take a moment." )
 $storageAccount = Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $storageAccountName}

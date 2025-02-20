@@ -8,7 +8,7 @@ This script takes a subscription ID and region name as a parameter and uses [thi
 
 Not all AZs are created equal so if you're not sure what zone to use then a Support ticket can get you some guidance on what zone you should be using.
 
-## Example:
+## Example
 
 `.\Get-AzLogicalToPhysicalAzMappings.ps1 -subscriptionId $mySubscriptionId -region eastus`
 
