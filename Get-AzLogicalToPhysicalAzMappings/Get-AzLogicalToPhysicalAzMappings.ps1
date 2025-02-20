@@ -5,6 +5,8 @@
 # Takes a subscription ID and a region name as parameters and returns the mappings of 
 # logical to physical AZ's for that subscriuption in the specified region.
 
+# Ref: https://learn.microsoft.com/rest/api/resources/subscriptions/list-locations?view=rest-resources-2022-12-01&tabs=HTTP
+
 # Output example:
 
 # logicalZone physicalZone
