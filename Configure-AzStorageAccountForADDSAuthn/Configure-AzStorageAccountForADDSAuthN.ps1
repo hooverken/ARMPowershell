@@ -121,7 +121,9 @@ if ($WindowsInstallationType -ne "Server" -and ($WindowsInstallationType -ne "Cl
 }
 
 # Check if we're running as Adminsitrator.  If not then we skip checking for these prereqs which might cause an error later on.
-if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)) {
+$currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+$isAdministratorContext = $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if (-not ($isAdministratorContext)) {
     Write-Warning ("This script is not running with elevated privileges.  This will cause errors if the ActiveDirectory module is not present.")
 } else {
     # We are running elevated so we can check if the required modules are present.
