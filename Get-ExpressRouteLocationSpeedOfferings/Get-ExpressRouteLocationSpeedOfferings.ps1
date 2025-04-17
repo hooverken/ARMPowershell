@@ -22,7 +22,7 @@ PARAMETER LocationName
     Get-ExpressRouteLocationSpeedOfferings.ps1 -Verbose
 
 .EXAMPLE
-    Get-ExpressRouteLocationSpeedOfferings.ps1 -LocationName 'Equinix' | Format-Table -Auto
+    Get-ExpressRouteLocationSpeedOfferings.ps1 -LocationName 'Equinix' | Format-Table -AutoSize
 #>
 
 [CmdletBinding()]
