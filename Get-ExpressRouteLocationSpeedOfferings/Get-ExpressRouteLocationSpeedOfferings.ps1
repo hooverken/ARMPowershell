@@ -10,7 +10,7 @@
     Remember, you should pick the CLOSEST LOCATION TO YOUR SITE, **not** the nearest location
     to the Azure region(s) that you will be working with!
 
-PARAMETER LocationName
+.PARAMETER LocationName
     The name of the location to filter on. If not specified, all locations will be returned.
 
     Note that this is a partial match, so you can use this to filter on a substring of the location name.
