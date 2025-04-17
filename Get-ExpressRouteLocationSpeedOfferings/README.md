@@ -28,4 +28,8 @@ The script can take several seconds to complete - be patient.
 
 This screenshot shows how you can filter the output by only returning records where the location name starts with a specific telecom provider.
 
+```PowerShell
+Get-ExpressRouteLocationSpeedOfferings.ps1 | Where-Object { $_.Location.StartsWith('Equinix') } | Format-Table -Auto
+```
+
 ![Screenshot](https://raw.githubusercontent.com/hooverken/ARMPowershell/main/Get-ExpressRouteLocationSpeedOfferings/Get-ExpressRouteLocationSpeedOfferings.png)
