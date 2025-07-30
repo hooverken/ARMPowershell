@@ -6,6 +6,8 @@ Because the mappings of "logical" availability zones are randomized for each sub
 
 This script takes a subscription ID and region name as a parameter and uses [this ARM API call](https://learn.microsoft.com/en-us/rest/api/resources/subscriptions/list-locations?view=rest-resources-2022-12-01&tabs=HTTP) to return the mappings of logical to physical availability zones is for that subscription.
 
+While the mappings for a subscription are the same across regions, some regions don't yet have availability zones so the target region is necessary as a parameter to filter the results correctly.
+
 Not all AZs are created equal so if you're not sure what zone to use then a Support ticket can get you some guidance on what zone you should be using.
 
 ## Example
