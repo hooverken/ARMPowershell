@@ -158,7 +158,7 @@ if ($storageAccount) {
 if ($false -eq $storageaccount.AllowSharedKeyAccess) {
     Write-Warning ("Storage account " + $storageAccount.StorageAccountName + " is configured to deny shared key access.")
     Write-Warning ("Please enable shared key access to this account before running this script.")
-    Write-Warning ("After this script runs successuflly you can disable shared key access again.")
+    Write-Warning ("After this process runs successfully you can disable shared key access again.")
     exit
 }
 
@@ -198,9 +198,9 @@ if (-not ($contributorGroupObjectId = (Get-AzADGroup -DisplayName $ShareUserGrou
 Write-verbose ("Setting storage context for role assignment.")
 
 $storageContext = New-AzStorageContext -StorageAccountName $storageaccount.StorageAccountName `
-                        -StorageAccountKey (get-AzStorageAccountKey `
-                        -ResourceGroupName $storageAccount.resourcegroupname `
-                        -Name $storageAccount.StorageAccountName)[0].Value
+                        -UseConnectedAccount `
+                        # -ResourceGroupName $storageAccount.ResourceGroupName `
+                        # -Name $storageAccount.StorageAccountName[0].Value
 
 # Check if the Profiles share exists.  If not, create it.
 Write-Verbose ("Checking if share $profileShareName exists in storage account " + $storageAccount.StorageAccountName)
@@ -268,7 +268,7 @@ write-verbose ("Mounting $MapPath")
 $result = new-smbmapping -LocalPath $driveLetter -RemotePath $MapPath -UserName $storageAccountName -Password $storageAccountKey -Persistent $false
 
 if (!($result.status -eq "OK")) {
-    Write-error "Attempt to map path $MapPath failed. Result was `n "
+    Write-error ("Attempt to map path $MapPath failed. Result was `n")
     write-host $Error[0]
     $result
     exit
