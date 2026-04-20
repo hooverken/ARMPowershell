@@ -24,6 +24,7 @@ if (-not (Get-Command "Get-AzAccessToken" -ErrorAction SilentlyContinue)) {
 # Make sure we have an authenticated session to Azure
 if ($null -ne ($context = Get-AzContext)) {
     Write-Verbose "Using subscription: $($context.Subscription.Name) ($($context.Subscription.Id))"
+    $subscriptionId = $context.Subscription.Id
 } else {
     Write-Error "No Azure context found. Please login using 'Connect-AzAccount' and try again."
     exit
@@ -39,7 +40,6 @@ if (-not ((Get-AzLocation -ErrorAction SilentlyContinue).Location -contains $loc
 }
 
 # Build the API request to check the quota change status
-$subscriptionId = $context.Subscription.Id
 $token = (Get-AzAccessToken -ResourceUrl "https://management.azure.com").Token | ConvertFrom-SecureString -AsPlainText
 
 $headers = @{
@@ -51,6 +51,7 @@ $apiVersion   = "2020-10-25"
 
 # Example: GET https://management.azure.com/subscriptions/<subscriptionId>/providers/Microsoft.Capacity/resourceProviders/Microsoft.Compute/locations/eastus/serviceLimitsRequests?api-version=2020-10-25
 
+
 $uri = "https://management.azure.com/subscriptions/$subscriptionId/providers/Microsoft.Capacity/resourceProviders/Microsoft.Compute/locations/$location/serviceLimitsRequests"+ "?api-version=$apiversion"
 
 $response = Invoke-RestMethod `
@@ -59,13 +60,12 @@ $response = Invoke-RestMethod `
     -Headers $headers `
     -Body $body
 
-$resultJson = $result.value | ConvertTo-Json -Depth 5
-
 Write-Verbose ("Request status summary:")
 write-Verbose ("`t* Requested " + $response.value.properties.value.limit + " cores in $location of type " + $response.value.properties.value.name.value)
 Write-Verbose ("`t* Request ID: " + $response.value.id)
+Write-Verbose ("`t* Submitted: " + $response.value.properties.requestSubmitTime)
 Write-Verbose ("`t* Provisioning State: " + $response.value.properties.provisioningState)
 Write-Verbose ("`t* Message: " + $response.value.properties.value.message)
 Write-Verbose ("`t* Action: " + $response.value.properties.value.action)
 
-$response
+$response.value.properties
