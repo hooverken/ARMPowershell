@@ -10,8 +10,9 @@
     Remember, you should pick the CLOSEST LOCATION TO YOUR SITE, **not** the nearest location
     to the Azure region(s) that you will be working with!
 
-.PARAMETER LocationName
-    The name of the location to filter on. If not specified, all locations will be returned.
+# CHANGELOG
+# - Added MetroOnly parameter to filter output to only include Metro-enabled sites (2 Sep 2025 KH)
+# - Improved error handling for bad locations
 
     Note that this is a partial match, so you can use this to filter on a substring of the location name.
 
@@ -31,6 +32,11 @@ param (
     [string]$LocationName = ''
 )
 
+[CmdletBinding()]
+param (
+    [Parameter(Mandatory=$false)][switch]$MetroOnly  # only return locations that have "Metro" in the name
+)
+
 # locations which are known to not resolve correctly are in the "bad locations" list.
 [Array]$badLocations = @("CDC-Canberra-CBR20")  # Returns a 429 error for some reason
 
@@ -41,7 +47,11 @@ Get-AzExpressRoutePortsLocation | `
         Where-Object { $_.Name -Like "*$LocationName*" -Or $LocationName.Length -eq 0 } | `
         ForEach-Object { 
 
-        $portLocation = $_.Name
+Get-AzExpressRoutePortsLocation | ForEach-Object { 
+
+    if ($MetroOnly -and -not ($_.name -like "*Metro*")) { return }  # skip non-Metro locations if MetroOnly is specified
+
+    $portLocation = $_.name
     
         Write-Verbose "Checking available ports for $portLocation..."
 

@@ -17,7 +17,7 @@ param(
 
 # These commands must be run on the target VM to make it re-detect its storage controller and disks on boot
 $registryChanges = {
-    reg delete HKLM\SYSTEM\CurrentControlSet\Services\stornvme\StartOverride /f 
+    reg delete "HKLM\SYSTEM\CurrentControlSet\Services\stornvme\StartOverride" /f 
     reg ADD "HKLM\SYSTEM\CurrentControlSet\services\stornvme" /v "ErrorControl" /t REG_DWORD /d 0 /f 
     reg ADD "HKLM\SYSTEM\CurrentControlSet\services\stornvme\StartOverride" /v 0 /t REG_DWORD /d 0 /f
 }

@@ -10,6 +10,10 @@ There is high demand for 100Gbps ports, expecially in the continental US.  Port 
 
 > It's important to understand that the bandwidth of an ExpressRoute circuit is configured **separately** from the link speed of the physical port provided by the ISP.  For example, you can attach using a 10Gb port and have your ExpressRoute circuit bandwidth set to 5Gb.
 
+## Parameter
+
+If you use `-MetroOnly` on the command line, only locations that are [enabled for ExpressRoute Metro](https://learn.microsoft.com/en-us/azure/expressroute/metro#expressroute-metro-locations) will be returned.
+
 ## Output
 
 The output is a list of objects with the following properties:
