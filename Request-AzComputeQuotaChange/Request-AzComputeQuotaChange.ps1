@@ -9,7 +9,24 @@
 #
 # Request-AzComputeQuotaChange -vmFamily StandardDSv5Family -region eastus -newCoreLimit 100
 
-
+<#
+.SYNOPSIS
+    Submits a request to change the quota for a specific VM family in a specific region via the Azure API
+.DESCRIPTION
+    This function submits a request to change the quota for a specific VM family in a specific region via the Azure API. 
+    It requires the Az.Accounts module and an authenticated Azure session.
+.NOTES
+.LINK
+    https://learn.microsoft.com/en-us/rest/api/reserved-vm-instances/quota-request-status/get?view=rest-reserved-vm-instances-2022-11-01&tabs=HTTP
+.EXAMPLE
+    Request-AzComputeQuotaChange -vmFamily StandardDSv5Family -region eastus -newCoreLimit 100
+.PARAMETER region (string)
+    The Azure region the request is for
+.PARAMETER vmFamily (string)
+    The VM family the request is for (e.g. StandardDSv5Family)
+.PARAMETER newCoreLimit (int)
+    The new core limit for the specified VM family in the region
+#>
 [CmdletBinding()]
 param (
     [Parameter(mandatory=$true)][String]$vmFamily,
