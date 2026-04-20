@@ -80,8 +80,6 @@ $body = @{
         }
 } | ConvertTo-Json -Depth 5
 
-$body
-
 $response = Invoke-RestMethod `
     -Method PUT `
     -Uri $uri `
