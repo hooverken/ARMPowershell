@@ -11,12 +11,19 @@
 
 <#
 .SYNOPSIS
-    Returns the status of quota change requests in a given region via the Azure API
-.DESCRIPTION
+    Returns the status of quota change requests in a given region via the Azure API.  
+    
+    Quota changes that have been approved but not yet provisioned will show as "Approved" in the provisioningState property. 
+    Quota changes that have been provisioned will show as "Provisioned". 
+    Quota changes that are still pending review will show as "Pending". 
+    Quota changes that have been rejected will show as "Rejected". 
+    
+    You can also see any messages from the Azure team regarding the request in the message property. 
+    You can validate what the quota is for a specfic VM family in a specific region by using the Get-AzComputeQuota cmdlet.
+ DESCRIPTION
     This function checks the status of open quota change requests in a specific region via the Azure API. 
     It requires the Az.Accounts module and an authenticated Azure session.
 .NOTES
-    This function is not supported in Linux.
 .LINK
     https://learn.microsoft.com/en-us/rest/api/reserved-vm-instances/quota?view=rest-reserved-vm-instances-2022-11-01
 .EXAMPLE
@@ -74,8 +81,7 @@ $uri = "https://management.azure.com/subscriptions/$subscriptionId/providers/Mic
 $response = Invoke-RestMethod `
     -Method GET `
     -Uri $uri `
-    -Headers $headers `
-    -Body $body
+    -Headers $headers
 
 Write-Verbose ("Request status summary:")
 write-Verbose ("`t* Requested " + $response.value.properties.value.limit + " cores in $location of type " + $response.value.properties.value.name.value)
@@ -96,5 +102,22 @@ $response.value.properties | % {
     }
     $outlist += $o
 }
+
+# $requestIds = $response.value.id
+# $requestIdGuids = $requestIds | ForEach-Object { $_ -replace ".*/" } # extract the guid from the end of the request ID  
+
+# $requestIdGuids | ForEach-Object {
+    
+#     $uri = "https://management.azure.com/subscriptions/$subscriptionId/providers/Microsoft.Capacity/resourceProviders/Microsoft.Compute/locations/$location/serviceLimitsRequests/$_"+ "?api-version=$apiversion"
+
+#     $response = Invoke-RestMethod `
+#     -Method GET `
+#     -Uri $uri `
+#     -Headers $headers
+    
+#     Write-Verbose ("Request ID: " + $_) 
+#     $response.properties | Format-List
+
+# }
 
 $outlist # | ft submitTime, provisioningState, vmFamily, quantity, message

@@ -75,8 +75,9 @@ if (!($regionResult.availabilityZoneMappings)) {
     $azMappings = $regionResult.availabilityZoneMappings
     $azMappings | ForEach-Object {
         [PSCustomObject]@{
+            subscriptionId = $subscriptionId
             logicalZone   = $_.logicalZone
             physicalZone  = $_.physicalZone
         }
-    } | Format-Table -AutoSize
+    }
 }
