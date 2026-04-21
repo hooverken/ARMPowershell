@@ -1,13 +1,37 @@
 # Check-AzComputeQuotaChangeStatus.ps1
 # By Ken Hoover <revooh.nek@moc.tfosorcim>
 # April 2026
-# Checks the status of a quota change request for a specific VM family in a specific region via the Azure API
+# Checks the status of a quota change requests in a given region via the Azure API
 
 # There is no native Powershell cmdlet to do this, though the Azure CLI can do it (az quota show)
 
 # Example:  
 #
 # Check-AzComputeQuotaChangeStatus -vmFamily StandardDSv5Family -region eastus -newCoreLimit 100
+
+<#
+.SYNOPSIS
+    Returns the status of quota change requests in a given region via the Azure API.  
+    
+    Quota changes that have been approved but not yet provisioned will show as "Approved" in the provisioningState property. 
+    Quota changes that have been provisioned will show as "Provisioned". 
+    Quota changes that are still pending review will show as "Pending". 
+    Quota changes that have been rejected will show as "Rejected". 
+    
+    You can also see any messages from the Azure team regarding the request in the message property. 
+    You can validate what the quota is for a specfic VM family in a specific region by using the Get-AzComputeQuota cmdlet.
+ DESCRIPTION
+    This function checks the status of open quota change requests in a specific region via the Azure API. 
+    It requires the Az.Accounts module and an authenticated Azure session.
+.NOTES
+.LINK
+    https://learn.microsoft.com/en-us/rest/api/reserved-vm-instances/quota?view=rest-reserved-vm-instances-2022-11-01
+.EXAMPLE
+    Check-AzComputeQuotaChangeStatus -vmFamily StandardDSv5Family -region eastus -newCoreLimit 100
+
+.PARAMETER location
+    The Azure region to check for quota change request status. This should be the same region used when submitting the quota change request.
+#>
 
 
 [CmdletBinding()]
@@ -57,8 +81,7 @@ $uri = "https://management.azure.com/subscriptions/$subscriptionId/providers/Mic
 $response = Invoke-RestMethod `
     -Method GET `
     -Uri $uri `
-    -Headers $headers `
-    -Body $body
+    -Headers $headers
 
 Write-Verbose ("Request status summary:")
 write-Verbose ("`t* Requested " + $response.value.properties.value.limit + " cores in $location of type " + $response.value.properties.value.name.value)
@@ -68,4 +91,33 @@ Write-Verbose ("`t* Provisioning State: " + $response.value.properties.provision
 Write-Verbose ("`t* Message: " + $response.value.properties.value.message)
 Write-Verbose ("`t* Action: " + $response.value.properties.value.action)
 
-$response.value.properties
+$outlist = @()
+$response.value.properties | % {
+    $o = New-Object PSObject -Property @{
+        submitTime = $_.requestSubmitTime
+        vmFamily = $_.value.name.value
+        quantity = $_.value.limit
+        provisioningState = $_.value.provisioningState
+        message = $_.value.message
+    }
+    $outlist += $o
+}
+
+# $requestIds = $response.value.id
+# $requestIdGuids = $requestIds | ForEach-Object { $_ -replace ".*/" } # extract the guid from the end of the request ID  
+
+# $requestIdGuids | ForEach-Object {
+    
+#     $uri = "https://management.azure.com/subscriptions/$subscriptionId/providers/Microsoft.Capacity/resourceProviders/Microsoft.Compute/locations/$location/serviceLimitsRequests/$_"+ "?api-version=$apiversion"
+
+#     $response = Invoke-RestMethod `
+#     -Method GET `
+#     -Uri $uri `
+#     -Headers $headers
+    
+#     Write-Verbose ("Request ID: " + $_) 
+#     $response.properties | Format-List
+
+# }
+
+$outlist # | ft submitTime, provisioningState, vmFamily, quantity, message
