@@ -28,13 +28,8 @@
 
 [CmdletBinding()]
 param (
-    [Parameter()]
-    [string]$LocationName = ''
-)
-
-[CmdletBinding()]
-param (
-    [Parameter(Mandatory=$false)][switch]$MetroOnly  # only return locations that have "Metro" in the name
+    [Parameter(Mandatory=$false)][switch]$MetroOnly,  # only return locations that have "Metro" in the name
+    [Parameter(Mandatory=$false)][string]$LocationName = ""  # filter locations by name
 )
 
 # locations which are known to not resolve correctly are in the "bad locations" list.
@@ -42,32 +37,45 @@ param (
 
 Write-Verbose "Excluding bad locations: $($badLocations -Join ', ')"
 
-Get-AzExpressRoutePortsLocation | `
+if ($LocationName) {
+    Write-Verbose "Retrieving info for location '$LocationName'"
+    $locations = Get-AzExpressRoutePortsLocation | `
         Where-Object { $badLocations -NotContains $_.Name } | `
-        Where-Object { $_.Name -Like "*$LocationName*" -Or $LocationName.Length -eq 0 } | `
-        ForEach-Object { 
+        Where-Object { $_.Name -Like "*$LocationName*" }
+} else {
+    Write-Verbose "No location name filter specified, retrieving all locations."
+    $locations = Get-AzExpressRoutePortsLocation | `
+        Where-Object { $badLocations -NotContains $_.Name }
+}
 
-Get-AzExpressRoutePortsLocation | ForEach-Object { 
+Write-verbose ("Found $($locations.Count) locations.")
+
+$locations | ForEach-Object { 
 
     if ($MetroOnly -and -not ($_.name -like "*Metro*")) { return }  # skip non-Metro locations if MetroOnly is specified
 
     $portLocation = $_.name
     
-        Write-Verbose "Checking available ports for $portLocation..."
+    Write-Verbose "Checking available ports for $portLocation..."
 
-        $portSpeeds = (Get-AzExpressRoutePortsLocation -LocationName $portLocation).AvailableBandwidths
+    $locationDetails = Get-AzExpressRoutePortsLocation -LocationName $portLocation
+    $portSpeeds = $locationDetails.AvailableBandwidths
 
-        $o = New-Object PSObject
-        $o | Add-Member -MemberType NoteProperty -Name "Location" -Value $portLocation
+    $o = New-Object PSObject
+    $o | Add-Member -MemberType NoteProperty -Name "Location" -Value $portLocation
 
-        if ($portSpeeds) {
-            $o | Add-Member -MemberType NoteProperty -Name "10Gbps" -Value ($portSpeeds.OfferName.Contains("10 Gbps"))
-            $o | Add-Member -MemberType NoteProperty -Name "100Gbps" -Value ($portSpeeds.OfferName.Contains("100 Gbps"))
-        }
-        else {
-            # Port speeds list is empty so nothing available from this provider for this location
-            $o | Add-Member -MemberType NoteProperty -Name "10Gbps" -value $false
-            $o | Add-Member -MemberType NoteProperty -Name "100Gbps" -value $false
-        }
-        $o
+    if ($portSpeeds) {
+        $o | Add-Member -MemberType NoteProperty -Name "10Gbps" -Value ($portSpeeds.OfferName.Contains("10 Gbps"))
+        $o | Add-Member -MemberType NoteProperty -Name "100Gbps" -Value ($portSpeeds.OfferName.Contains("100 Gbps"))
+        $o | Add-Member -MemberType NoteProperty -Name "400Gbps" -Value ($portSpeeds.OfferName.Contains("400 Gbps"))
+        $o | Add-Member -MemberType NoteProperty -Name "ContactInfo" -Value ($locationDetails.Contact)
     }
+    else {
+        # Port speeds list is empty so nothing available from this provider for this location
+        $o | Add-Member -MemberType NoteProperty -Name "10Gbps" -value $false
+        $o | Add-Member -MemberType NoteProperty -Name "100Gbps" -value $false
+        $o | Add-Member -MemberType NoteProperty -Name "400Gbps" -value $false
+        $o | Add-Member -MemberType NoteProperty -Name "ContactInfo" -Value ($locationDetails.Contact)
+    }
+    $o
+}
