@@ -20,10 +20,10 @@
     Get-ExpressRouteLocationSpeedOfferings.ps1
 
 .EXAMPLE
-    Get-ExpressRouteLocationSpeedOfferings.ps1 -Verbose
+    Get-ExpressRouteLocationSpeedOfferings.ps1 -LocationName 'NEC-Tokyo' | Format-Table -AutoSize
 
 .EXAMPLE
-    Get-ExpressRouteLocationSpeedOfferings.ps1 -LocationName 'Equinix' | Format-Table -AutoSize
+    Get-ExpressRouteLocationSpeedOfferings.ps1 -MetroOnly
 #>
 
 [CmdletBinding()]
