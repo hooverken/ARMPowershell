@@ -10,13 +10,13 @@ This powershell script returns information about restrictions on VM SKUs in a sp
 - `-sku` (optional): The name of the VM SKU to filter for.  If this is not specified, all VM SKUs in the specified location will be returned.
 
 >Important:  Zone information returned is the **logical** zone number for the subscription.
-These are mapped internally to the **physical** availability zones available in the region.  To display the logical to physical zone mappings for a subscription you can use the Azure [API call](https://learn.microsoft.com/en-us/rest/api/resources/subscriptions/list-locations?view=rest-resources-2022-12-01&tabs=HTTP) or try my [Get-AzLogicalToPhysicalAzMappiings](https://github.com/hooverken/ARMPowershell/tree/main/Get-AzLogicalToPhysicalAzMappings) script which retrieves this information directly.
+These are mapped internally to the **physical** availability zones available in the region.  To display the logical to physical zone mappings for a subscription you can use the Azure [API call](https://learn.microsoft.com/en-us/rest/api/resources/subscriptions/list-locations?view=rest-resources-2022-12-01&tabs=HTTP) or try my [Get-AzLogicalToPhysicalAzMappings](https://github.com/hooverken/ARMPowershell/tree/main/Get-AzLogicalToPhysicalAzMappings) script which retrieves this information directly.
 
 ## Examples
 
 ### Check for restrictions on a specific VM sku
 
-In this example, the listed VM size (Standard_D8ls_v5) is only available in (logical) zone 4 of region eastus2 for the subscription.
+In this example, the listed VM size (Standard_D8ls_v5) is only available in (logical) zones 1, 3 and 4 of region eastus2 for the subscription.
 
 `.\Get-AzVmRestrictions.ps1 -Location eastus2 -sku Standard_D8ls_v5`
 
