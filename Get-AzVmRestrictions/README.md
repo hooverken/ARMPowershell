@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This powershell script returns information about restrictions on VM SKUs in a specified region, including both region-wide and AZ-s\pecific restrictions.
+This powershell script returns information about restrictions on VM SKUs in a specified region, including both region-wide and AZ-specific restrictions.
 
 ## Parameters
 
@@ -16,12 +16,16 @@ These are mapped internally to the **physical** availability zones available in 
 
 ### Check for restrictions on a specific VM sku
 
-In this example, the listed VM size (Standard_D8ls_v5) is only available in zone 4 of region eastus2.
+In this example, the listed VM size (Standard_D8ls_v5) is only available in (logical) zone 4 of region eastus2 for the subscription.
 
 `.\Get-AzVmRestrictions.ps1 -Location eastus2 -sku Standard_D8ls_v5`
+
+<img width="706" height="192" alt="singleVmSkuRestriction" src="https://github.com/user-attachments/assets/70840246-9516-4d1b-8596-96dfd9b5aa6c" />
 
 ### Return all available VM skus with restriction info
 
 `.\Get-AzVmRestrictions.ps1 -Location eastus2 | where { $_.sku.StartsWith("Standard_D8") }`
 
-In this example, no VM sku is provided so the code returns all available VMs in the region.  A `where` filter is applied to return results which match specific criteria like in this example
+In this example, no VM sku is provided so the code returns all available VMs in the region.  A `where` filter is applied to return results which match specific criteria like in this example.  Only the first few objects returned are displayed.
+
+<img width="944" height="491" alt="allVmsWithWhereFilter" src="https://github.com/user-attachments/assets/bffabb23-40f4-4d63-ae15-6e52a977626c" />
