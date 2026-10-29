@@ -20,7 +20,7 @@ In this example, the listed VM size (Standard_D8ls_v5) is only available in (log
 
 `.\Get-AzVmRestrictions.ps1 -Location eastus2 -sku Standard_D8ls_v5`
 
-<img width="706" height="192" alt="singleVmSkuRestriction" src="https://github.com/user-attachments/assets/70840246-9516-4d1b-8596-96dfd9b5aa6c" />
+<img width="706" height="192" alt="singleVmSkuRestriction" src="https://github.com/user-attachments/assets/3fc045c7-70f0-4718-b0f8-6136ad15a20a" />
 
 ### Return all available VM skus with restriction info
 
@@ -28,4 +28,4 @@ In this example, the listed VM size (Standard_D8ls_v5) is only available in (log
 
 In this example, no VM sku is provided so the code returns all available VMs in the region.  A `where` filter is applied to return results which match specific criteria like in this example.  Only the first few objects returned are displayed.
 
-<img width="944" height="491" alt="allVmsWithWhereFilter" src="https://github.com/user-attachments/assets/bffabb23-40f4-4d63-ae15-6e52a977626c" />
+<img width="944" height="491" alt="allVmsWithWhereFilter" src="https://github.com/user-attachments/assets/1ff29f78-6940-4702-b996-1ca52d6a05e2" />
