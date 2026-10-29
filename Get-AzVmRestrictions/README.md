@@ -22,6 +22,14 @@ In this example, the listed VM size (Standard_D8ls_v5) is only available in (log
 
 <img width="706" height="192" alt="singleVmSkuRestriction" src="https://github.com/user-attachments/assets/3fc045c7-70f0-4718-b0f8-6136ad15a20a" />
 
+### Multiple restrictions
+
+In this example, the VM type specified has two restriction types applied to it:
+* A "Location" restriction which prevents it from being deployed anywhere in the region
+* A "Zone" restriction which blocks it from being deployed to the listed zones.  Both of these restrictions need to be lifted to deploy a VM of this type.
+
+<img width="602" height="250" alt="twoRestrictionsVm" src="https://github.com/user-attachments/assets/9a678113-0dc2-418b-809f-82e78bed39aa" />
+
 ### Return all available VM skus with restriction info
 
 `.\Get-AzVmRestrictions.ps1 -Location eastus2 | where { $_.sku.StartsWith("Standard_D8") }`
