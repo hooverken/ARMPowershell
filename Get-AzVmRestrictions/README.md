@@ -4,11 +4,13 @@
 
 This powershell script returns information about restrictions on VM SKUs in a specified region, including both region-wide and AZ-specific restrictions.
 
-## About VM Restrictions in Azure
+## About Restrictions on VMs in Azure
 
-Restrictions are applied at the subscription level to manage availability of VM SKUs in specific regions and availability zones.  These restrictions can vary by subscription and typically include limitations on which regions or zones a particular VM SKU can be deployed to.
+Restrictions are constraints applied at the subscription level to manage availability of VM SKUs in specific regions and availability zones.  These restrictions can vary by subscription and typically include limitations on which regions or zones a particular VM SKU can be deployed to.  These are not under the user's control nor are they easily visible which is where this script can help.  If you are trying to deploy a VM and find that it's failing due to a restriction, opening a support case to ask that the subscription be removed may help.
 
->Important:  Zone information returned is always the **logical** zone number for the subscription.  These are mapped internally to the **physical** availability zones available in the region.  To display the logical to physical zone mappings for a subscription you can use the Azure [API call](https://learn.microsoft.com/en-us/rest/api/resources/subscriptions/list-locations?view=rest-resources-2022-12-01&tabs=HTTP) or try my [Get-AzLogicalToPhysicalAzMappings](https://github.com/hooverken/ARMPowershell/tree/main/Get-AzLogicalToPhysicalAzMappings) script which retrieves this information directly.
+Restrictions are _distinct_ from [Virtual CPU Quotas](https://learn.microsoft.com/en-us/azure/virtual-machines/quotas?tabs=cli) which cap how many cores of a given VM type you can create.
+
+>Important:  Zone information returned by this script is always the **logical** zone number.  These zone numbers are mapped internally to the **physical** availability zones available in the region and the mappings are different for each subscription so it's sometimes important to keep track of the mappings of logical to physical availability zones for each subscription, especially when you are trying to place compute resources in different subscriptions into specific zones for resiliency or other regions.  To display the zone mappings for a subscription you can use an Azure [API call](https://learn.microsoft.com/en-us/rest/api/resources/subscriptions/list-locations?view=rest-resources-2022-12-01&tabs=HTTP) or try my [Get-AzLogicalToPhysicalAzMappings](https://github.com/hooverken/ARMPowershell/tree/main/Get-AzLogicalToPhysicalAzMappings) script which retrieves this information directly.
 
 ## Parameters
 
@@ -21,7 +23,7 @@ Restrictions are applied at the subscription level to manage availability of VM 
 
 ### Check for restrictions on a specific VM sku in a region
 
-In this example, the listed VM sku is only available in (logical) zone 3 of region `centralus` for the current subscription.
+In this example, the listed VM sku is only available in zone 3 of region `centralus` for the current subscription.
 
 ```Powershell
 .\Get-AzVmRestrictions.ps1 -location centralus -sku Standard_E4as_v7
@@ -33,10 +35,10 @@ In this example, the listed VM sku is only available in (logical) zone 3 of regi
 
 ### VM types with multiple restrictions applied
 
-In this example, the VM sku specified has two restriction types applied to it:
+In this example, the VM sku specified has two restriction types applied to it.  In order for a VM to deploy successfully, all restrictions must be removed.
 
 - A "Location" restriction which prevents it from being deployed anywhere in the region
-- A "Zone" restriction which blocks it from being deployed to the listed zones.  Both of these restrictions need to be lifted to deploy a VM of this type.
+- A "Zone" restriction which blocks it from being deployed to zone 2.  
 
 ```Powershell
 .\Get-AzVmRestrictions.ps1 -location centralus -sku Standard_D4as_v5
