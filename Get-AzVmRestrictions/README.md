@@ -56,8 +56,6 @@ This checks both multiple VM types and multiple regions.  This uses the format-t
 ```
 <img width="951" height="268" alt="MultiSkuMultiRegion" src="https://github.com/user-attachments/assets/76f43fac-0727-4edc-b773-34a795b3d928" />
 
-<img width="951" height="268" alt="MultiSkuMultiRegion" src="https://github.com/user-attachments/assets/76f43fac-0727-4edc-b773-34a795b3d928" />
-
 ---
 
 ### Return all available VM skus in a region with restriction info
