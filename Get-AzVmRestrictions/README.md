@@ -41,7 +41,6 @@ In this example, the VM sku specified has two restriction types applied to it:
 ```Powershell
 .\Get-AzVmRestrictions.ps1 -location centralus -sku Standard_D4as_v5
 ```
-
 <img width="723" height="378" alt="multipleRestrictionsOnAVm" src="https://github.com/user-attachments/assets/1df060f4-c401-46ea-919e-bf522e5023d9" />
 
 ---
@@ -53,6 +52,7 @@ This checks both multiple VM types and multiple regions.  This uses the format-t
 ```powershell
 .\Get-AzVmRestrictions.ps1 -location centralus,eastus2 -sku Standard_D4as_v6,Standard_E8as_v7 | ft sku,location,restrictionType,availableZones,notAvailableZones
 ```
+<img width="951" height="268" alt="MultiSkuMultiRegion" src="https://github.com/user-attachments/assets/76f43fac-0727-4edc-b773-34a795b3d928" />
 
 <img width="951" height="268" alt="MultiSkuMultiRegion" src="https://github.com/user-attachments/assets/76f43fac-0727-4edc-b773-34a795b3d928" />
 
