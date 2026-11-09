@@ -1,0 +1,22 @@
+[
+  {
+    "Name": "connectivityvnet",
+    "VnetId": "/subscriptions/f63f64c2-a1b5-4e30-9a79-5ae39ae7d45c/resourceGroups/Connectivity-networkServices-EastUS2-RG/providers/Microsoft.Network/virtualNetworks/Connectivity-vnet-10.50.0.0-22-eastus2",
+    "RegistrationEnabled": false
+  },
+  {
+    "Name": "identityvnet",
+    "VnetId": "/subscriptions/7bc3492c-2e7b-408f-bb97-afdedc3a461d/resourceGroups/Identity-networkServices-EastUS2-RG/providers/Microsoft.Network/virtualNetworks/Identity-vnet-10.50.4.0-24-eastus2",
+    "RegistrationEnabled": false
+  },
+  {
+    "Name": "managementvnet",
+    "VnetId": "/subscriptions/6813380f-efe0-4737-ab73-04b47395e7b3/resourceGroups/Management-networkServices-EastUS2-RG/providers/Microsoft.Network/virtualNetworks/MGT-vnet-10.50.6.0-24-eastus2",
+    "RegistrationEnabled": false
+  },
+  {
+    "Name": "vdivnet",
+    "VnetId": "/subscriptions/79a772ba-6133-46b5-b8c1-6ce253b27e19/resourceGroups/VDI-networkServices-EastUS2-RG/providers/Microsoft.Network/virtualNetworks/VDI-vnet-10.50.8.0-22-eastus2",
+    "RegistrationEnabled": false
+  }
+]

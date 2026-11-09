@@ -1,0 +1,192 @@
+{
+  "properties": {
+    "lenses": [
+      {
+        "order": 0,
+        "parts": [
+          {
+            "position": {
+              "x": 0,
+              "y": 4,
+              "colSpan": 6,
+              "rowSpan": 4
+            },
+            "metadata": {
+              "inputs": [
+                {
+                  "name": "sharedTimeRange",
+                  "isOptional": true
+                },
+                {
+                  "name": "options",
+                  "value": {
+                    "chart": {
+                      "metrics": [
+                        {
+                          "resourceMetadata": {
+                            "id": "/subscriptions/3223d7a0-8c83-432c-ae22-160507c2c5e2/resourceGroups/usc-lvhn-epic-odb-rg-prod/providers/Microsoft.Compute/disks/zsleodbprdb001-epiccore01"
+                          },
+                          "name": "Composite Disk Read Operations/sec",
+                          "aggregationType": 4,
+                          "namespace": "microsoft.compute/disks",
+                          "metricVisualization": {
+                            "displayName": "Disk Read Operations/sec(Preview)"
+                          }
+                        },
+                        {
+                          "resourceMetadata": {
+                            "id": "/subscriptions/3223d7a0-8c83-432c-ae22-160507c2c5e2/resourceGroups/usc-lvhn-epic-odb-rg-prod/providers/Microsoft.Compute/disks/zsleodbprdb001-epiccore01"
+                          },
+                          "name": "Composite Disk Write Operations/sec",
+                          "aggregationType": 4,
+                          "namespace": "microsoft.compute/disks",
+                          "metricVisualization": {
+                            "displayName": "Disk Write Operations/sec(Preview)"
+                          }
+                        }
+                      ],
+                      "title": "Avg Disk Read Operations/sec(Preview) and Avg Disk Write Operations/sec(Preview) for zsleodbprdb001-epiccore01",
+                      "titleKind": 1,
+                      "visualization": {
+                        "chartType": 2,
+                        "legendVisualization": {
+                          "isVisible": true,
+                          "position": 2,
+                          "hideHoverCard": false,
+                          "hideLabelNames": true
+                        },
+                        "axisVisualization": {
+                          "x": {
+                            "isVisible": true,
+                            "axisType": 2
+                          },
+                          "y": {
+                            "isVisible": true,
+                            "axisType": 1
+                          }
+                        }
+                      },
+                      "timespan": {
+                        "relative": {
+                          "duration": 86400000
+                        },
+                        "showUTCTime": false,
+                        "grain": 1
+                      }
+                    }
+                  },
+                  "isOptional": true
+                }
+              ],
+              "type": "Extension/HubsExtension/PartType/MonitorChartPart",
+              "settings": {
+                "content": {
+                  "options": {
+                    "chart": {
+                      "metrics": [
+                        {
+                          "resourceMetadata": {
+                            "id": "/subscriptions/3223d7a0-8c83-432c-ae22-160507c2c5e2/resourceGroups/usc-lvhn-epic-odb-rg-prod/providers/Microsoft.Compute/disks/zsleodbprdb001-epiccore01"
+                          },
+                          "name": "Composite Disk Read Operations/sec",
+                          "aggregationType": 4,
+                          "namespace": "microsoft.compute/disks",
+                          "metricVisualization": {
+                            "displayName": "Disk Read Operations/sec(Preview)"
+                          }
+                        },
+                        {
+                          "resourceMetadata": {
+                            "id": "/subscriptions/3223d7a0-8c83-432c-ae22-160507c2c5e2/resourceGroups/usc-lvhn-epic-odb-rg-prod/providers/Microsoft.Compute/disks/zsleodbprdb001-epiccore01"
+                          },
+                          "name": "Composite Disk Write Operations/sec",
+                          "aggregationType": 4,
+                          "namespace": "microsoft.compute/disks",
+                          "metricVisualization": {
+                            "displayName": "Disk Write Operations/sec(Preview)"
+                          }
+                        }
+                      ],
+                      "title": "Avg Disk Read Operations/sec(Preview) and Avg Disk Write Operations/sec(Preview) for zsleodbprdb001-epiccore01",
+                      "titleKind": 1,
+                      "visualization": {
+                        "chartType": 2,
+                        "legendVisualization": {
+                          "isVisible": true,
+                          "position": 2,
+                          "hideHoverCard": false,
+                          "hideLabelNames": true
+                        },
+                        "axisVisualization": {
+                          "x": {
+                            "isVisible": true,
+                            "axisType": 2
+                          },
+                          "y": {
+                            "isVisible": true,
+                            "axisType": 1
+                          }
+                        },
+                        "disablePinning": true
+                      }
+                    }
+                  }
+                }
+              },
+              "filters": {
+                "MsPortalFx_TimeRange": {
+                  "model": {
+                    "format": "local",
+                    "granularity": "auto",
+                    "relative": "1440m"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "model": {
+        "timeRange": {
+          "value": {
+            "relative": {
+              "duration": 24,
+              "timeUnit": 1
+            }
+          },
+          "type": "MsPortalFx.Composition.Configuration.ValueTypes.TimeRange"
+        },
+        "filterLocale": {
+          "value": "en-us"
+        },
+        "filters": {
+          "value": {
+            "MsPortalFx_TimeRange": {
+              "model": {
+                "format": "local",
+                "granularity": "1m",
+                "relative": "4h"
+              },
+              "displayCache": {
+                "name": "Local Time",
+                "value": "Past 4 hours"
+              },
+              "filteredPartIds": [
+                "StartboardPart-MonitorChartPart-a83fa408-8573-4674-a3a8-0ff05e677744"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "name": "The Watch List",
+  "type": "Microsoft.Portal/dashboards",
+  "location": "INSERT LOCATION",
+  "tags": {
+    "hidden-title": "The Watch List"
+  },
+  "apiVersion": "2022-12-01-preview"
+}

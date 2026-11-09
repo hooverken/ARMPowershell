@@ -1,0 +1,52 @@
+[
+  {
+    "Name": "gdd2cyeluusy2",
+    "RecordType": "A",
+    "Ttl": 10,
+    "Records": [
+      {
+        "Ipv4Address": "10.50.9.132"
+      }
+    ]
+  },
+  {
+    "Name": "jdqsyw7smoesk",
+    "RecordType": "A",
+    "Ttl": 10,
+    "Records": [
+      {
+        "Ipv4Address": "10.50.9.116"
+      }
+    ]
+  },
+  {
+    "Name": "kentosomsixeus2",
+    "RecordType": "A",
+    "Ttl": 10,
+    "Records": [
+      {
+        "Ipv4Address": "10.50.8.25"
+      }
+    ]
+  },
+  {
+    "Name": "m5qvvwoy7uuge",
+    "RecordType": "A",
+    "Ttl": 10,
+    "Records": [
+      {
+        "Ipv4Address": "10.50.8.21"
+      }
+    ]
+  },
+  {
+    "Name": "vfoanmb6vveg2",
+    "RecordType": "A",
+    "Ttl": 10,
+    "Records": [
+      {
+        "Ipv4Address": "10.50.8.26"
+      }
+    ]
+  }
+]

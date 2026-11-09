@@ -1,0 +1,44 @@
+[
+  {
+    "PrivateEndpoint": "kentosomsixeus2-PEP",
+    "ResourceGroup": "03-MSIXStorageAccount-EastUS2-RG",
+    "ZoneGroupName": "default",
+    "ConfigName": "privatelink_file_core_windows_net",
+    "CurrentZoneId": "/subscriptions/79a772ba-6133-46b5-b8c1-6ce253b27e19/resourceGroups/vdi-networkservices-eastus2-rg/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net"
+  },
+  {
+    "PrivateEndpoint": "kentosovdistorage-pep",
+    "ResourceGroup": "VDI-coreServices-EastUS2-RG",
+    "ZoneGroupName": "default",
+    "ConfigName": "privatelink-file-core-windows-net",
+    "CurrentZoneId": "/subscriptions/79a772ba-6133-46b5-b8c1-6ce253b27e19/resourceGroups/vdi-networkservices-eastus2-rg/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net"
+  },
+  {
+    "PrivateEndpoint": "W10-HYB-DT-eastus2-HP-storageAcct-PEP",
+    "ResourceGroup": "W10-HYB-DT-eastus2-RG",
+    "ZoneGroupName": "default",
+    "ConfigName": "privatelink.file.core.windows.net",
+    "CurrentZoneId": "/subscriptions/79a772ba-6133-46b5-b8c1-6ce253b27e19/resourceGroups/vdi-networkservices-eastus2-rg/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net"
+  },
+  {
+    "PrivateEndpoint": "W11-HYB-DT-eastus2-HP-storageAcct-PEP",
+    "ResourceGroup": "W11-HYB-DT-eastus2-RG",
+    "ZoneGroupName": "default",
+    "ConfigName": "privatelink.file.core.windows.net",
+    "CurrentZoneId": "/subscriptions/79a772ba-6133-46b5-b8c1-6ce253b27e19/resourceGroups/vdi-networkservices-eastus2-rg/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net"
+  },
+  {
+    "PrivateEndpoint": "W11-HYB-RA-eastus2-HP-storageAcct-PEP",
+    "ResourceGroup": "W11-HYB-RA-eastus2-RG",
+    "ZoneGroupName": "default",
+    "ConfigName": "privatelink.file.core.windows.net",
+    "CurrentZoneId": "/subscriptions/79a772ba-6133-46b5-b8c1-6ce253b27e19/resourceGroups/vdi-networkservices-eastus2-rg/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net"
+  },
+  {
+    "PrivateEndpoint": "W11-PERS-eastus2-HP-storageAcct--eastus2-PEP",
+    "ResourceGroup": "W11-PERS-eastus2-RG",
+    "ZoneGroupName": "default",
+    "ConfigName": "privatelink.file.core.windows.net",
+    "CurrentZoneId": "/subscriptions/79a772ba-6133-46b5-b8c1-6ce253b27e19/resourceGroups/vdi-networkservices-eastus2-rg/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net"
+  }
+]

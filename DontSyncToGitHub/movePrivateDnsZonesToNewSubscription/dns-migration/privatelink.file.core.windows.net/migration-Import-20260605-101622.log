@@ -1,0 +1,2 @@
+2026-06-05T10:16:22 [INFO] Context set to subscription 3499918d-c23b-4476-a2b3-2ebb913a9f55
+2026-06-05T10:16:22 [INFO] === PHASE 2: IMPORT zone 'privatelink.file.core.windows.net' into RG '06-privateDnsZoneMoveTesting-EastUS2-RG' ===

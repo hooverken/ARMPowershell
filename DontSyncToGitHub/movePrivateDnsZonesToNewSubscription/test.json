@@ -1,0 +1,157 @@
+[
+  {
+    "ZoneName": "privatelink.file.core.windows.net",
+    "ResourceGroupName": "vdi-networkservices-eastus2-rg",
+    "Tags": null,
+    "RecordSets": [
+      {
+        "Name": "gdd2cyeluusy2",
+        "RecordType": "A",
+        "Ttl": 10,
+        "Metadata": {
+          "creator": "created by private endpoint W11-HYB-RA-eastus2-HP-storageAcct-PEP with resource guid c00c87c6-c07a-4ce4-9711-ccb9cd9ce30a"
+        },
+        "Records": [
+          {
+            "Type": "A",
+            "Ipv4Address": "10.50.9.132"
+          }
+        ]
+      },
+      {
+        "Name": "jdqsyw7smoesk",
+        "RecordType": "A",
+        "Ttl": 10,
+        "Metadata": {
+          "creator": "created by private endpoint W11-HYB-DT-eastus2-HP-storageAcct-PEP with resource guid 52259e90-fac8-4663-b461-09888a9c0706"
+        },
+        "Records": [
+          {
+            "Type": "A",
+            "Ipv4Address": "10.50.9.116"
+          }
+        ]
+      },
+      {
+        "Name": "kentosomsixeus2",
+        "RecordType": "A",
+        "Ttl": 10,
+        "Metadata": {
+          "creator": "created by private endpoint kentosomsixeus2-PEP with resource guid 7b1da5f6-4c23-4cc1-84f4-8440672f3d67"
+        },
+        "Records": [
+          {
+            "Type": "A",
+            "Ipv4Address": "10.50.8.25"
+          }
+        ]
+      },
+      {
+        "Name": "m5qvvwoy7uuge",
+        "RecordType": "A",
+        "Ttl": 10,
+        "Metadata": {
+          "creator": "created by private endpoint W11-PERS-eastus2-HP-storageAcct--eastus2-PEP with resource guid 43ac4020-856d-4fa5-8bbf-bd39653112fd"
+        },
+        "Records": [
+          {
+            "Type": "A",
+            "Ipv4Address": "10.50.8.21"
+          }
+        ]
+      },
+      {
+        "Name": "vfoanmb6vveg2",
+        "RecordType": "A",
+        "Ttl": 10,
+        "Metadata": {
+          "creator": "created by private endpoint W10-HYB-DT-eastus2-HP-storageAcct-PEP with resource guid c400eda4-4758-4337-82f6-9df722614987"
+        },
+        "Records": [
+          {
+            "Type": "A",
+            "Ipv4Address": "10.50.8.26"
+          }
+        ]
+      }
+    ],
+    "VirtualNetworkLinks": [
+      {
+        "Name": "connectivityvnet",
+        "VirtualNetworkId": "/subscriptions/f63f64c2-a1b5-4e30-9a79-5ae39ae7d45c/resourceGroups/Connectivity-networkServices-EastUS2-RG/providers/Microsoft.Network/virtualNetworks/Connectivity-vnet-10.50.0.0-22-eastus2",
+        "RegistrationEnabled": false
+      },
+      {
+        "Name": "identityvnet",
+        "VirtualNetworkId": "/subscriptions/7bc3492c-2e7b-408f-bb97-afdedc3a461d/resourceGroups/Identity-networkServices-EastUS2-RG/providers/Microsoft.Network/virtualNetworks/Identity-vnet-10.50.4.0-24-eastus2",
+        "RegistrationEnabled": false
+      },
+      {
+        "Name": "managementvnet",
+        "VirtualNetworkId": "/subscriptions/6813380f-efe0-4737-ab73-04b47395e7b3/resourceGroups/Management-networkServices-EastUS2-RG/providers/Microsoft.Network/virtualNetworks/MGT-vnet-10.50.6.0-24-eastus2",
+        "RegistrationEnabled": false
+      },
+      {
+        "Name": "vdivnet",
+        "VirtualNetworkId": "/subscriptions/79a772ba-6133-46b5-b8c1-6ce253b27e19/resourceGroups/VDI-networkServices-EastUS2-RG/providers/Microsoft.Network/virtualNetworks/VDI-vnet-10.50.8.0-22-eastus2",
+        "RegistrationEnabled": false
+      }
+    ]
+  },
+  {
+    "ZoneName": "privatelink.vault.azure.net",
+    "ResourceGroupName": "vdi-networkservices-eastus2-rg",
+    "Tags": null,
+    "RecordSets": [],
+    "VirtualNetworkLinks": [
+      {
+        "Name": "link-to-connectivity-vnet10.50.0.0-220-eastus2",
+        "VirtualNetworkId": "/subscriptions/f63f64c2-a1b5-4e30-9a79-5ae39ae7d45c/resourceGroups/Connectivity-networkServices-EastUS2-RG/providers/Microsoft.Network/virtualNetworks/Connectivity-vnet-10.50.0.0-22-eastus2",
+        "RegistrationEnabled": false
+      },
+      {
+        "Name": "link-to-identity-vnet10.50.4.0-24-eastus2",
+        "VirtualNetworkId": "/subscriptions/7bc3492c-2e7b-408f-bb97-afdedc3a461d/resourceGroups/Identity-networkServices-EastUS2-RG/providers/Microsoft.Network/virtualNetworks/Identity-vnet-10.50.4.0-24-eastus2",
+        "RegistrationEnabled": false
+      },
+      {
+        "Name": "link-to-vdi-vnet10.50.8.0-220-eastus2",
+        "VirtualNetworkId": "/subscriptions/79a772ba-6133-46b5-b8c1-6ce253b27e19/resourceGroups/VDI-networkServices-EastUS2-RG/providers/Microsoft.Network/virtualNetworks/VDI-vnet-10.50.8.0-22-eastus2",
+        "RegistrationEnabled": false
+      }
+    ]
+  },
+  {
+    "ZoneName": "privatelink.vaultcore.azure.net",
+    "ResourceGroupName": "vdi-networkservices-eastus2-rg",
+    "Tags": {},
+    "RecordSets": [
+      {
+        "Name": "vdi-keyvault-eastus2",
+        "RecordType": "A",
+        "Ttl": 10,
+        "Metadata": {
+          "creator": "created by private endpoint vdi-keyvault-eastus2-pep with resource guid 54f9a121-f853-4d9a-b2d2-316d234d08bd"
+        },
+        "Records": [
+          {
+            "Type": "A",
+            "Ipv4Address": "10.50.8.28"
+          }
+        ]
+      }
+    ],
+    "VirtualNetworkLinks": [
+      {
+        "Name": "link-to-connectivity-vnet10.50.0.0-220-eastus2",
+        "VirtualNetworkId": "/subscriptions/f63f64c2-a1b5-4e30-9a79-5ae39ae7d45c/resourceGroups/Connectivity-networkServices-EastUS2-RG/providers/Microsoft.Network/virtualNetworks/Connectivity-vnet-10.50.0.0-22-eastus2",
+        "RegistrationEnabled": false
+      },
+      {
+        "Name": "vs5y4m273bozq",
+        "VirtualNetworkId": "/subscriptions/79a772ba-6133-46b5-b8c1-6ce253b27e19/resourceGroups/VDI-networkServices-EastUS2-RG/providers/Microsoft.Network/virtualNetworks/VDI-vnet-10.50.8.0-22-eastus2",
+        "RegistrationEnabled": false
+      }
+    ]
+  }
+]

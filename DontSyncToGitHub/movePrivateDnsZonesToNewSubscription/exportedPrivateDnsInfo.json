@@ -1,0 +1,89 @@
+[
+  {
+    "ZoneName": "privatelink.blob.core.windows.net",
+    "ResourceGroupName": "connectivity-networkservices-eastus2-rg",
+    "Tags": null,
+    "RecordSets": [],
+    "VirtualNetworkLinks": []
+  },
+  {
+    "ZoneName": "privatelink.eus2.backup.windowsazure.com",
+    "ResourceGroupName": "connectivity-networkservices-eastus2-rg",
+    "Tags": {},
+    "RecordSets": [
+      {
+        "Name": "290045823348144978-ab-pod01-id1",
+        "RecordType": "A",
+        "Ttl": 10,
+        "Metadata": {
+          "creator": "created by private endpoint Identity-RecoveryVault-EastUS2-PEP with resource guid 23f3d1fc-8a82-407f-a1ab-b6d0903a461a"
+        },
+        "Records": [
+          {
+            "Ipv4Address": "10.50.4.7",
+            "Type": "A"
+          }
+        ]
+      },
+      {
+        "Name": "290045823348144978-ab-pod01-rec2",
+        "RecordType": "A",
+        "Ttl": 10,
+        "Metadata": {
+          "creator": "created by private endpoint Identity-RecoveryVault-EastUS2-PEP with resource guid 23f3d1fc-8a82-407f-a1ab-b6d0903a461a"
+        },
+        "Records": [
+          {
+            "Ipv4Address": "10.50.4.6",
+            "Type": "A"
+          }
+        ]
+      }
+    ],
+    "VirtualNetworkLinks": [
+      {
+        "Name": "6maisws5xgvoy",
+        "VirtualNetworkId": "/subscriptions/7bc3492c-2e7b-408f-bb97-afdedc3a461d/resourceGroups/Identity-networkServices-EastUS2-RG/providers/Microsoft.Network/virtualNetworks/Identity-vnet-10.50.4.0-24-eastus2",
+        "RegistrationEnabled": false
+      }
+    ]
+  },
+  {
+    "ZoneName": "privatelink.queue.core.windows.net",
+    "ResourceGroupName": "connectivity-networkservices-eastus2-rg",
+    "Tags": {},
+    "RecordSets": [
+      {
+        "Name": "290045823348144978-ab-pod01-id1",
+        "RecordType": "A",
+        "Ttl": 3600,
+        "Metadata": null,
+        "Records": [
+          {
+            "Ipv4Address": "10.50.4.7",
+            "Type": "A"
+          }
+        ]
+      },
+      {
+        "Name": "290045823348144978-ab-pod01-rec2",
+        "RecordType": "A",
+        "Ttl": 3600,
+        "Metadata": null,
+        "Records": [
+          {
+            "Ipv4Address": "10.50.4.6",
+            "Type": "A"
+          }
+        ]
+      }
+    ],
+    "VirtualNetworkLinks": [
+      {
+        "Name": "6maisws5xgvoy",
+        "VirtualNetworkId": "/subscriptions/7bc3492c-2e7b-408f-bb97-afdedc3a461d/resourceGroups/Identity-networkServices-EastUS2-RG/providers/Microsoft.Network/virtualNetworks/Identity-vnet-10.50.4.0-24-eastus2",
+        "RegistrationEnabled": false
+      }
+    ]
+  }
+]

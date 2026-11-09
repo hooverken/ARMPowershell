@@ -1,0 +1,7 @@
+2026-06-05T10:14:18 [INFO] Context set to subscription 79a772ba-6133-46b5-b8c1-6ce253b27e19
+2026-06-05T10:14:18 [INFO] === PHASE 1: EXPORT zone 'privatelink.file.core.windows.net' from RG 'VDI-networkServices-EastUS2-RG' ===
+2026-06-05T10:14:19 [OK] Captured 5 record sets -> .\dns-migration\privatelink.file.core.windows.net\records.json
+2026-06-05T10:14:20 [OK] Captured 4 VNet links -> .\dns-migration\privatelink.file.core.windows.net\vnetlinks.json
+2026-06-05T10:14:33 [OK] Mapped 6 PE zone-group configs bound to this zone -> .\dns-migration\privatelink.file.core.windows.net\pe-zonegroup-map.json
+2026-06-05T10:14:33 [OK] EXPORT complete. Review artifacts before importing.
+2026-06-05T10:14:33 [INFO] Phase 'Export' finished. Log: .\dns-migration\privatelink.file.core.windows.net\migration-Export-20260605-101417.log

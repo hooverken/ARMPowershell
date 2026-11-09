@@ -1,0 +1,141 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Analysis report for nsg to vnet flowlogs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .table-striped > tbody > tr:nth-child(2n+1) > td, .table-striped > tbody > tr:nth-child(2n+1) > th {
+           background-color: #cce6ff;
+        }
+
+        .bg-primary
+        {
+            background-color: #0000ff;
+        }
+
+        hr.rounded {
+          border-top: 3px solid #0000ff;
+          border-radius: 5px;
+        }
+
+        html {
+            overflow-y: scroll;
+            overflow-x: scroll;
+        }
+    </style>
+</head>
+<body>
+<h3 class='text-primary text-center mb-5'>Migration report for subscription: fd15d72f-d377-425d-b624-5b4652f846fb and region: eastus</h2>
+<div class='card m-3'>
+<ul class="nav nav-pills mb-3 nav-justified" id="pills-tab" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="pills-fllist-tab" data-bs-toggle="pill" data-bs-target="#pills-fllist" type="button" role="tab" aria-controls="pills-fllist" aria-selected="true">List of flowlogs</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="pills-analysis-tab" data-bs-toggle="pill" data-bs-target="#pills-analysis" type="button" role="tab" aria-controls="pills-analysis" aria-selected="false">Analysis Report</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="pills-migration-tab" data-bs-toggle="pill" data-bs-target="#pills-migration" type="button" role="tab" aria-controls="pills-migration" aria-selected="false">Migration</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="pills-rollback-tab" data-bs-toggle="pill" data-bs-target="#pills-rollback" type="button" role="tab" aria-controls="pills-rollback" aria-selected="false">Rollback</button>
+  </li>
+</ul>
+<div class="tab-content card" id="pills-tabContent">
+<div class='tab-pane fade show active' id='pills-fllist' role='tabpanel' aria-labelledby='pills-fllist-tab'>
+<div class="alert alert-info">04/25/2024 13:02:16 This tab has list of flowlogs in given subscription and region</div>
+<table class='table table-striped table-bordered'>
+<colgroup><col/><col/></colgroup>
+<thead class='bg-primary text-white text-center'>
+<tr><th>FlowLogResourceId</th><th>TargetResourceId</th></tr>
+</thead>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/ADDC1-nsg-kentoso-hub-addomaincontrollers-eastus-rg-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/Kentoso-Hub-ADDomainControllers-EastUS-RG/providers/Microsoft.Network/networkSecurityGroups/ADDC1-nsg</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverO-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverOutboundSubnet-nsg-eastus</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/ADDC2-nsg-kentoso-hub-addomaincontrollers-eastus-rg-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/Kentoso-Hub-ADDomainControllers-EastUS-RG/providers/Microsoft.Network/networkSecurityGroups/ADDC2-nsg</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-PrivateEndpointSubn-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-PrivateEndpointSubnet-nsg-eastus</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-azureBastionSubnet--flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-azureBastionSubnet-nsg-eastus</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverI-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverInboundSubnet-nsg-eastus</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-domainControllerSub-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-domainControllerSubnet-nsg-eastus</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/Utility1-nsg-kentoso-hub-utilityvms-eastus-rg-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/Kentoso-Hub-UtilityVMs-EastUS-RG/providers/Microsoft.Network/networkSecurityGroups/Utility1-nsg</td></tr>
+</table>
+</div>
+<div class='tab-pane fade show active' id='pills-analysis' role='tabpanel' aria-labelledby='pills-analysis-tab'>
+<div class="alert alert-info">04/25/2024 13:02:39 This tab has analysis report for migration like on which targets vnet flowlog will be created and which nsg flowlogs will be disabled</div>
+<table class='table table-striped table-bordered'>
+<colgroup><col/><col/></colgroup>
+<thead class='bg-primary text-white text-center'>
+<tr><th>FlowLog</th><th>TargetNSG</th><th>NSGAssociatedNicOrSubnet</th><th>CanBeAggregated</th><th>AggregatedFlTarget</th><th>Comments</th></tr>
+</thead>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverO-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverOutboundSubnet-nsg-eastus</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/virtualNetworks/kentoso-hub-vnet-10.50.0.0-22-eastus/subnets/dnsPrivateResolverOutboundSubnet</td><td>False</td><td></td><td>Subnet flowlog can not be aggregated to vnet flowlog as all subnets in vnet do not have flowlogs</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-domainControllerSub-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-domainControllerSubnet-nsg-eastus</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/virtualNetworks/kentoso-hub-vnet-10.50.0.0-22-eastus/subnets/domainControllerSubnet</td><td>False</td><td></td><td>Subnet flowlog can not be aggregated to vnet flowlog as all subnets in vnet do not have flowlogs</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-PrivateEndpointSubn-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-PrivateEndpointSubnet-nsg-eastus</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/virtualNetworks/kentoso-hub-vnet-10.50.0.0-22-eastus/subnets/PrivateEndpointSubnet</td><td>False</td><td></td><td>Subnet flowlog can not be aggregated to vnet flowlog as all subnets in vnet do not have flowlogs</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-azureBastionSubnet--flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-azureBastionSubnet-nsg-eastus</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/virtualNetworks/kentoso-hub-vnet-10.50.0.0-22-eastus/subnets/azureBastionSubnet</td><td>False</td><td></td><td>Subnet flowlog can not be aggregated to vnet flowlog as all subnets in vnet do not have flowlogs</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverI-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverInboundSubnet-nsg-eastus</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/virtualNetworks/kentoso-hub-vnet-10.50.0.0-22-eastus/subnets/dnsPrivateResolverInboundSubnet</td><td>False</td><td></td><td>Subnet flowlog can not be aggregated to vnet flowlog as all subnets in vnet do not have flowlogs</td></tr>
+</table>
+<h4 class='text-center'>List of targets on which flowlog will be enabled with flowlog whose settings will be used</h4>
+<table class='table table-striped table-bordered'>
+<colgroup><col/><col/></colgroup>
+<thead class='bg-primary text-white text-center'>
+<tr><th>NewTargetResourceId</th><th>FlowLogSettingUsedForCreationOfNewFlowLog</th></tr>
+</thead>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/virtualNetworks/kentoso-hub-vnet-10.50.0.0-22-eastus/subnets/dnsPrivateResolverOutboundSubnet</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverO-flowlog</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/virtualNetworks/kentoso-hub-vnet-10.50.0.0-22-eastus/subnets/domainControllerSubnet</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-domainControllerSub-flowlog</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/virtualNetworks/kentoso-hub-vnet-10.50.0.0-22-eastus/subnets/PrivateEndpointSubnet</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-PrivateEndpointSubn-flowlog</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/virtualNetworks/kentoso-hub-vnet-10.50.0.0-22-eastus/subnets/azureBastionSubnet</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-azureBastionSubnet--flowlog</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/virtualNetworks/kentoso-hub-vnet-10.50.0.0-22-eastus/subnets/dnsPrivateResolverInboundSubnet</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverI-flowlog</td></tr>
+</table>
+<h4 class='text-center'>List of flowlogs to be disabled</h4>
+<table class='table table-striped table-bordered'>
+<colgroup><col/><col/></colgroup>
+<thead class='bg-primary text-white text-center'>
+<tr><th>FlowLogsToBeDisabled</th><th>TargetResourceId</th></tr>
+</thead>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/ADDC2-nsg-kentoso-hub-addomaincontrollers-eastus-rg-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/Kentoso-Hub-ADDomainControllers-EastUS-RG/providers/Microsoft.Network/networkSecurityGroups/ADDC2-nsg</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverI-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverInboundSubnet-nsg-eastus</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-domainControllerSub-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-domainControllerSubnet-nsg-eastus</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-PrivateEndpointSubn-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-PrivateEndpointSubnet-nsg-eastus</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/ADDC1-nsg-kentoso-hub-addomaincontrollers-eastus-rg-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/Kentoso-Hub-ADDomainControllers-EastUS-RG/providers/Microsoft.Network/networkSecurityGroups/ADDC1-nsg</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/Utility1-nsg-kentoso-hub-utilityvms-eastus-rg-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/Kentoso-Hub-UtilityVMs-EastUS-RG/providers/Microsoft.Network/networkSecurityGroups/Utility1-nsg</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverO-flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverOutboundSubnet-nsg-eastus</td></tr>
+<tr><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/kentoso-hub-vnet-10.50.0.0-22-eastus-azureBastionSubnet--flowlog</td><td>/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-azureBastionSubnet-nsg-eastus</td></tr>
+</table>
+</div>
+<div class='tab-pane fade show active' id='pills-migration' role='tabpanel' aria-labelledby='pills-migration-tab'>
+<div class="alert alert-info">04/25/2024 13:04:34 This tab has logs related to migration process, like which flowlog is being created/disabled</div>
+<table class='table table-striped table-bordered'>
+<colgroup><col/><col/></colgroup>
+<thead class='bg-primary text-white text-center'>
+</table><ul class='list-group'>
+<li class='list-group-item list-group-item-success'>04/25/2024 13:05:16 Created flowlog:domainControllerSubnet-kentoso-hub-vnet-10.50.0.0-22-eastus-kentoso-hub-networkswith target:/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/virtualNetworks/kentoso-hub-vnet-10.50.0.0-22-eastus/subnets/domainControllerSubnet</li>
+<li class='list-group-item list-group-item-success'>04/25/2024 13:05:16 Created flowlog:PrivateEndpointSubnet-kentoso-hub-vnet-10.50.0.0-22-eastus-kentoso-hub-networksewith target:/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/virtualNetworks/kentoso-hub-vnet-10.50.0.0-22-eastus/subnets/PrivateEndpointSubnet</li>
+<li class='list-group-item list-group-item-success'>04/25/2024 13:05:17 Created flowlog:azureBastionSubnet-kentoso-hub-vnet-10.50.0.0-22-eastus-kentoso-hub-networkserviwith target:/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/virtualNetworks/kentoso-hub-vnet-10.50.0.0-22-eastus/subnets/azureBastionSubnet</li>
+<li class='list-group-item list-group-item-success'>04/25/2024 13:05:17 Created flowlog:dnsPrivateResolverInboundSubnet-kentoso-hub-vnet-10.50.0.0-22-eastus-kentoso-hubwith target:/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/virtualNetworks/kentoso-hub-vnet-10.50.0.0-22-eastus/subnets/dnsPrivateResolverInboundSubnet</li>
+<li class='list-group-item list-group-item-success'>04/25/2024 13:07:19 Created flowlog:dnsPrivateResolverOutboundSubnet-kentoso-hub-vnet-10.50.0.0-22-eastus-kentoso-huwith target:/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/virtualNetworks/kentoso-hub-vnet-10.50.0.0-22-eastus/subnets/dnsPrivateResolverOutboundSubnet</li>
+<li class='list-group-item list-group-item-success'>Disabled flowlog:ADDC2-nsg-kentoso-hub-addomaincontrollers-eastus-rg-flowlogTargetResourceId:/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/Kentoso-Hub-ADDomainControllers-EastUS-RG/providers/Microsoft.Network/networkSecurityGroups/ADDC2-nsg</li>
+<li class='list-group-item list-group-item-success'>Disabled flowlog:kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverO-flowlogTargetResourceId:/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverOutboundSubnet-nsg-eastus</li>
+<li class='list-group-item list-group-item-success'>Disabled flowlog:Utility1-nsg-kentoso-hub-utilityvms-eastus-rg-flowlogTargetResourceId:/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/Kentoso-Hub-UtilityVMs-EastUS-RG/providers/Microsoft.Network/networkSecurityGroups/Utility1-nsg</li>
+<li class='list-group-item list-group-item-success'>Disabled flowlog:kentoso-hub-vnet-10.50.0.0-22-eastus-domainControllerSub-flowlogTargetResourceId:/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-domainControllerSubnet-nsg-eastus</li>
+<li class='list-group-item list-group-item-success'>Disabled flowlog:ADDC1-nsg-kentoso-hub-addomaincontrollers-eastus-rg-flowlogTargetResourceId:/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/Kentoso-Hub-ADDomainControllers-EastUS-RG/providers/Microsoft.Network/networkSecurityGroups/ADDC1-nsg</li>
+<li class='list-group-item list-group-item-success'>Disabled flowlog:kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverI-flowlogTargetResourceId:/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-dnsPrivateResolverInboundSubnet-nsg-eastus</li>
+<li class='list-group-item list-group-item-success'>Disabled flowlog:kentoso-hub-vnet-10.50.0.0-22-eastus-azureBastionSubnet--flowlogTargetResourceId:/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-azureBastionSubnet-nsg-eastus</li>
+<li class='list-group-item list-group-item-success'>Disabled flowlog:kentoso-hub-vnet-10.50.0.0-22-eastus-PrivateEndpointSubn-flowlogTargetResourceId:/subscriptions/fd15d72f-d377-425d-b624-5b4652f846fb/resourceGroups/kentoso-hub-networkservices-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/kentoso-hub-vnet-10.50.0.0-22-eastus-PrivateEndpointSubnet-nsg-eastus</li>
+</ul>
+<div class='alert alert-success'>Migration done successfully</div>
+</div>
+<div class='tab-pane fade show active' id='pills-rollback' role='tabpanel' aria-labelledby='pills-rollback-tab'>
+<div class="alert alert-info">04/25/2024 13:08:08 This tab has logs related to rollback process, like which flowlog is being deleted/enabled</div>
+<table class='table table-striped table-bordered'>
+<colgroup><col/><col/></colgroup>
+<thead class='bg-primary text-white text-center'>
+</table>
+</div>
+<div class='tab-pane fade show active' id='pills-rollback' role='tabpanel' aria-labelledby='pills-rollback-tab'>
+<div class="alert alert-info">This tab has logs related to rollback process like which flowlog is being deleted/enabled</div>
+<table class='table table-striped table-bordered'>
+<colgroup><col/><col/></colgroup>
+<thead class='bg-primary text-white text-center'>
+</thead>
+</table>
+</div>
+</body>
+</html>

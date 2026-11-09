@@ -1,2 +1,2 @@
-DontSyncToGitHub/**
+./DontSyncToGitHub/**
 ./.gitignore

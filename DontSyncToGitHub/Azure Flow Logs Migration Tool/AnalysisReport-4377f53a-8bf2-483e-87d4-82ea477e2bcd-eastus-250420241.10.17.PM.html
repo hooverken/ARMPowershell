@@ -1,0 +1,114 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Analysis report for nsg to vnet flowlogs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .table-striped > tbody > tr:nth-child(2n+1) > td, .table-striped > tbody > tr:nth-child(2n+1) > th {
+           background-color: #cce6ff;
+        }
+
+        .bg-primary
+        {
+            background-color: #0000ff;
+        }
+
+        hr.rounded {
+          border-top: 3px solid #0000ff;
+          border-radius: 5px;
+        }
+
+        html {
+            overflow-y: scroll;
+            overflow-x: scroll;
+        }
+    </style>
+</head>
+<body>
+<h3 class='text-primary text-center mb-5'>Migration report for subscription: 4377f53a-8bf2-483e-87d4-82ea477e2bcd and region: eastus</h2>
+<div class='card m-3'>
+<ul class="nav nav-pills mb-3 nav-justified" id="pills-tab" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="pills-fllist-tab" data-bs-toggle="pill" data-bs-target="#pills-fllist" type="button" role="tab" aria-controls="pills-fllist" aria-selected="true">List of flowlogs</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="pills-analysis-tab" data-bs-toggle="pill" data-bs-target="#pills-analysis" type="button" role="tab" aria-controls="pills-analysis" aria-selected="false">Analysis Report</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="pills-migration-tab" data-bs-toggle="pill" data-bs-target="#pills-migration" type="button" role="tab" aria-controls="pills-migration" aria-selected="false">Migration</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="pills-rollback-tab" data-bs-toggle="pill" data-bs-target="#pills-rollback" type="button" role="tab" aria-controls="pills-rollback" aria-selected="false">Rollback</button>
+  </li>
+</ul>
+<div class="tab-content card" id="pills-tabContent">
+<div class='tab-pane fade show active' id='pills-fllist' role='tabpanel' aria-labelledby='pills-fllist-tab'>
+<div class="alert alert-info">04/25/2024 13:10:18 This tab has list of flowlogs in given subscription and region</div>
+<table class='table table-striped table-bordered'>
+<colgroup><col/><col/></colgroup>
+<thead class='bg-primary text-white text-center'>
+<tr><th>FlowLogResourceId</th><th>TargetResourceId</th></tr>
+</thead>
+<tr><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-default-10.50.8.0-2-flowlog</td><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/kentoso-sbx-vnet-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-default-10.50.8.0-24-nsg-eastus</td></tr>
+<tr><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-devBoxSubnet-10.50.-flowlog</td><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/kentoso-sbx-vnet-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-devBoxSubnet-10.50.9.0-26-nsg-eastus</td></tr>
+</table>
+</div>
+<div class='tab-pane fade show active' id='pills-analysis' role='tabpanel' aria-labelledby='pills-analysis-tab'>
+<div class="alert alert-info">04/25/2024 13:10:31 This tab has analysis report for migration like on which targets vnet flowlog will be created and which nsg flowlogs will be disabled</div>
+<table class='table table-striped table-bordered'>
+<colgroup><col/><col/></colgroup>
+<thead class='bg-primary text-white text-center'>
+<tr><th>FlowLog</th><th>TargetNSG</th><th>NSGAssociatedNicOrSubnet</th><th>CanBeAggregated</th><th>AggregatedFlTarget</th><th>Comments</th></tr>
+</thead>
+<tr><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-default-10.50.8.0-2-flowlog</td><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/kentoso-sbx-vnet-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-default-10.50.8.0-24-nsg-eastus</td><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/kentoso-sbx-vnet-eastus-rg/providers/Microsoft.Network/virtualNetworks/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22/subnets/default-10.50.8.0-24</td><td>False</td><td></td><td>Subnet flowlog can not be aggregated to vnet flowlog as all subnets in vnet do not have flowlogs</td></tr>
+<tr><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-devBoxSubnet-10.50.-flowlog</td><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/kentoso-sbx-vnet-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-devBoxSubnet-10.50.9.0-26-nsg-eastus</td><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/kentoso-sbx-vnet-eastus-rg/providers/Microsoft.Network/virtualNetworks/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22/subnets/devBoxSubnet-10.50.9.0-26</td><td>False</td><td></td><td>Subnet flowlog can not be aggregated to vnet flowlog as all subnets in vnet do not have flowlogs</td></tr>
+</table>
+<h4 class='text-center'>List of targets on which flowlog will be enabled with flowlog whose settings will be used</h4>
+<table class='table table-striped table-bordered'>
+<colgroup><col/><col/></colgroup>
+<thead class='bg-primary text-white text-center'>
+<tr><th>NewTargetResourceId</th><th>FlowLogSettingUsedForCreationOfNewFlowLog</th></tr>
+</thead>
+<tr><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/kentoso-sbx-vnet-eastus-rg/providers/Microsoft.Network/virtualNetworks/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22/subnets/default-10.50.8.0-24</td><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-default-10.50.8.0-2-flowlog</td></tr>
+<tr><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/kentoso-sbx-vnet-eastus-rg/providers/Microsoft.Network/virtualNetworks/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22/subnets/devBoxSubnet-10.50.9.0-26</td><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-devBoxSubnet-10.50.-flowlog</td></tr>
+</table>
+<h4 class='text-center'>List of flowlogs to be disabled</h4>
+<table class='table table-striped table-bordered'>
+<colgroup><col/><col/></colgroup>
+<thead class='bg-primary text-white text-center'>
+<tr><th>FlowLogsToBeDisabled</th><th>TargetResourceId</th></tr>
+</thead>
+<tr><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-default-10.50.8.0-2-flowlog</td><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/kentoso-sbx-vnet-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-default-10.50.8.0-24-nsg-eastus</td></tr>
+<tr><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus/flowLogs/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-devBoxSubnet-10.50.-flowlog</td><td>/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/kentoso-sbx-vnet-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-devBoxSubnet-10.50.9.0-26-nsg-eastus</td></tr>
+</table>
+</div>
+<div class='tab-pane fade show active' id='pills-migration' role='tabpanel' aria-labelledby='pills-migration-tab'>
+<div class="alert alert-info">04/25/2024 13:11:07 This tab has logs related to migration process, like which flowlog is being created/disabled</div>
+<table class='table table-striped table-bordered'>
+<colgroup><col/><col/></colgroup>
+<thead class='bg-primary text-white text-center'>
+</table><ul class='list-group'>
+<li class='list-group-item list-group-item-danger'>04/25/2024 13:11:24 Creation of a flowlogdevBoxSubnet-10.50.9.0-26-Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-kentoso-sbx-vnet-failed</li>
+<li class='list-group-item list-group-item-success'>04/25/2024 13:11:34 Created flowlog:default-10.50.8.0-24-Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-kentoso-sbx-vnet-eastuwith target:/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/kentoso-sbx-vnet-eastus-rg/providers/Microsoft.Network/virtualNetworks/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22/subnets/default-10.50.8.0-24</li>
+<li class='list-group-item list-group-item-success'>Disabled flowlog:Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-default-10.50.8.0-2-flowlogTargetResourceId:/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/kentoso-sbx-vnet-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-default-10.50.8.0-24-nsg-eastus</li>
+<li class='list-group-item list-group-item-success'>Disabled flowlog:Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-devBoxSubnet-10.50.-flowlogTargetResourceId:/subscriptions/4377f53a-8bf2-483e-87d4-82ea477e2bcd/resourceGroups/kentoso-sbx-vnet-eastus-rg/providers/Microsoft.Network/networkSecurityGroups/Kentoso-Sbx-Vnet-EastUS-10.50.8.0-22-devBoxSubnet-10.50.9.0-26-nsg-eastus</li>
+</ul>
+<div class='alert alert-success'>Migration done successfully</div>
+</div>
+<div class='tab-pane fade show active' id='pills-rollback' role='tabpanel' aria-labelledby='pills-rollback-tab'>
+<div class="alert alert-info">04/25/2024 13:14:32 This tab has logs related to rollback process, like which flowlog is being deleted/enabled</div>
+<table class='table table-striped table-bordered'>
+<colgroup><col/><col/></colgroup>
+<thead class='bg-primary text-white text-center'>
+</table>
+</div>
+<div class='tab-pane fade show active' id='pills-rollback' role='tabpanel' aria-labelledby='pills-rollback-tab'>
+<div class="alert alert-info">This tab has logs related to rollback process like which flowlog is being deleted/enabled</div>
+<table class='table table-striped table-bordered'>
+<colgroup><col/><col/></colgroup>
+<thead class='bg-primary text-white text-center'>
+</thead>
+</table>
+</div>
+</body>
+</html>
